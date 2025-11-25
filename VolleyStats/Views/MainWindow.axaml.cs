@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 
 namespace VolleyStats.Views
 {
@@ -7,6 +8,12 @@ namespace VolleyStats.Views
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void TeamsButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            var win = new TeamsWindow();
+            win.ShowDialog(this);
         }
     }
 }

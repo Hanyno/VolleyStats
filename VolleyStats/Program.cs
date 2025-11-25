@@ -1,5 +1,8 @@
-﻿using System;
-using Avalonia;
+﻿using Avalonia;
+using System;
+using System.Text;
+using VolleyStats.Data;
+using VolleyStats.Domain;
 
 namespace VolleyStats
 {
@@ -9,8 +12,14 @@ namespace VolleyStats
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args) => BuildAvaloniaApp()
-            .StartWithClassicDesktopLifetime(args);
+        public static void Main(string[] args)
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            TeamsDatabaseInitializer.EnsureCreated();
+
+            BuildAvaloniaApp()
+                .StartWithClassicDesktopLifetime(args);
+        }
 
         // Avalonia configuration, don't remove; also used by visual designer.
         public static AppBuilder BuildAvaloniaApp()

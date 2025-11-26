@@ -11,6 +11,7 @@ using VolleyStats.Domain;
 
 namespace VolleyStats.Views
 {
+    // TODO: Services
     public partial class TeamsWindow : Window
     {
         private bool _isDialogOpen = false;

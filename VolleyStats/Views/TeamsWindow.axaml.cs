@@ -3,41 +3,46 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using VolleyStats.Data;
 using VolleyStats.Domain;
+using VolleyStats.Services;
 
 namespace VolleyStats.Views
 {
-    // TODO: Services
     public partial class TeamsWindow : Window
     {
         private bool _isDialogOpen = false;
 
-        private readonly TeamsRepository _repository = new();
+        private readonly ITeamsService _teamsService;
+        public ObservableCollection<Team> Teams { get; } = new();
 
-        public TeamsWindow()
+        public TeamsWindow(ITeamsService teamsService)
         {
+            _teamsService = teamsService;
+
             InitializeComponent();
             LoadTeams();
         }
 
         private void LoadTeams()
         {
-            List<Team> teams;
+            Teams.Clear();
             try
             {
-                teams = _repository.GetAllTeamsWithPlayers();
+                foreach (var t in _teamsService.GetAllTeamsWithPlayers())
+                {
+                    Teams.Add(t);
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error loading teams: " + ex);
-                teams = [];
             }
 
-            TeamsList.ItemsSource = teams;
+            TeamsList.ItemsSource = Teams;
         }
 
         private async void NewButton_OnClick(object? sender, RoutedEventArgs e)
@@ -58,10 +63,10 @@ namespace VolleyStats.Views
 
             if (result == true)
             {
-                _repository.SaveTeam(newTeam);
+                // Uložíme nový tým pøes service vrstvu
+                _teamsService.SaveTeam(newTeam);
                 LoadTeams();
             }
-
         }
 
         private async void ImportButton_OnClick(object? sender, RoutedEventArgs e)
@@ -99,8 +104,8 @@ namespace VolleyStats.Views
                     return;
                 }
 
-                // Uložení týmu do DB
-                _repository.SaveTeam(team);
+                // Uložení týmu do DB pøes service
+                _teamsService.SaveTeam(team);
 
                 LoadTeams();
             }
@@ -110,11 +115,9 @@ namespace VolleyStats.Views
             }
         }
 
-
-
         private void ExportAllButton_OnClick(object? sender, RoutedEventArgs e)
         {
-            // TODO: naèíst všechny týmy a vyexportovat
+            // TODO: naèíst všechny týmy z _teamsService a vyexportovat
         }
 
         private async void TeamsList_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -136,12 +139,14 @@ namespace VolleyStats.Views
 
             if (result == true)
             {
-                _repository.SaveTeam(selectedTeam);
+                // Uložit zmìny
+                _teamsService.SaveTeam(selectedTeam);
                 LoadTeams();
             }
             else if (result == false)
             {
-                _repository.DeleteTeam(selectedTeam.Id);
+                // Smazat tým
+                _teamsService.DeleteTeam(selectedTeam.Id);
                 LoadTeams();
             }
         }
@@ -151,9 +156,9 @@ namespace VolleyStats.Views
         /// lines = celý obsah souboru po øádcích.
         /// </summary>
         private bool TryParseTeamFromSq(
-    string[] lines,
-    out Team team,
-    out string errorMessage)
+            string[] lines,
+            out Team team,
+            out string errorMessage)
         {
             team = null!;
             errorMessage = string.Empty;
@@ -226,7 +231,6 @@ namespace VolleyStats.Views
                             DateTimeStyles.None,
                             out var birthDate))
                     {
-                        // pøizpùsob typu – mùžeš mít DateOnly / DateTime / nullable
                         player.BirthDate = birthDate;
                     }
 

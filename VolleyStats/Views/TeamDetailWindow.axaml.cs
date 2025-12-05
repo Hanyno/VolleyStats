@@ -92,6 +92,7 @@ namespace VolleyStats.Views
             _team.TeamCode = TeamCodeTextBox.Text ?? "";
             _team.Name = NameTextBox.Text ?? "";
             _team.CoachName = CoachTextBox.Text ?? "";
+            _team.AssistantCoachName = AssistantCoachTextBox.Text ?? "";
             _team.Abbreviation = AbbreviationTextBox.Text ?? "";
 
             _team.Players = [.. Players];

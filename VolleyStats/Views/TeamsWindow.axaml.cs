@@ -17,12 +17,13 @@ namespace VolleyStats.Views
         private bool _isDialogOpen = false;
 
         private readonly ITeamsService _teamsService;
+        private readonly IOfficialStatsService _officialStatsService;
         public ObservableCollection<Team> Teams { get; } = new();
 
-        public TeamsWindow(ITeamsService teamsService)
+        public TeamsWindow(ITeamsService teamsService, IOfficialStatsService officialStatsService)
         {
             _teamsService = teamsService;
-
+            _officialStatsService = officialStatsService;
             InitializeComponent();
             LoadTeams();
         }
@@ -170,10 +171,6 @@ namespace VolleyStats.Views
                     errorMessage = "Soubor neobsahuje dostatek øádkù (chybí hlavièka týmu).";
                     return false;
                 }
-
-                // 0. øádek ignorujeme
-                // 1. øádek = tým: TEAM-CODE \t Jméno_Týmu \t jmeno_coache \t jmeno_asistenta
-                //                 \t abbreviation_code \t character_encoding \t jmeno_tymu_v_hexa ...
                 var teamLine = lines[1];
                 var teamParts = teamLine.Split('\t');
 
@@ -192,11 +189,9 @@ namespace VolleyStats.Views
                     Abbreviation = teamParts[4].Trim()
                 };
 
-                // pokud má Team kolekci hráèù, ujisti se, že není null
                 if (team.Players == null)
                     team.Players = new List<Player>();
 
-                // 2+ øádky = hráèi
                 for (int i = 2; i < lines.Length; i++)
                 {
                     var line = lines[i];
@@ -206,23 +201,18 @@ namespace VolleyStats.Views
 
                     var parts = line.Split('\t');
 
-                    // bezpeènost – aspoò prvních pár základních sloupcù
                     if (parts.Length < 5)
-                        continue; // nebo mùžeš logovat chybu a pokraèovat
+                        continue;
 
                     var player = new Player();
 
-                    // 0: èíslo dresu
                     if (int.TryParse(parts[0].Trim(), out var shirtNumber))
                         player.JerseyNumber = shirtNumber;
 
-                    // 1: id hráèe
-                    player.ExternalPlayerId = parts[1].Trim();  // pøizpùsob si názvu property
+                    player.ExternalPlayerId = parts[1].Trim();
 
-                    // 2: pøíjmení
                     player.LastName = parts[2].Trim();
 
-                    // 3: datum narození (dd/mm/yyyy)
                     var birthRaw = parts[3].Trim();
                     if (DateTime.TryParseExact(
                             birthRaw,
@@ -234,34 +224,25 @@ namespace VolleyStats.Views
                         player.BirthDate = birthDate;
                     }
 
-                    // 4: výška (int)
                     if (int.TryParse(parts[4].Trim(), out var height))
                         player.HeightCm = height;
 
-                    // 5: (prázdné)
-                    // 6: char_libero/kapitan (L/C)
                     player.PlayerRole = parts[6].Trim();
 
-                    // 7: (prázdné)
-                    // 8: jméno
                     if (parts.Length > 8)
                         player.FirstName = parts[8].Trim();
 
-                    // 9: enum_post (èíslo)
                     if (parts.Length > 9 && int.TryParse(parts[9].Trim(), out var positionValue))
                     {
                         player.Position = (Enums.PlayerPost)positionValue;
                     }
 
-                    // 10: nickname
                     if (parts.Length > 10)
                         player.NickName = parts[10].Trim();
 
-                    // 11: cizinka? (bool / null)
                     if (parts.Length > 11)
                         player.IsForeign = ParseNullableBool(parts[11]);
 
-                    // 12: pøestoupila_pryè? (bool / null)
                     if (parts.Length > 12)
                         player.TransferredOut = ParseNullableBool(parts[12]);
 
@@ -291,6 +272,11 @@ namespace VolleyStats.Views
                 "0" or "false" or "f" or "no" or "n" => false,
                 _ => null
             };
+        }
+
+        private void UploadButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            _officialStatsService.UploadTeams(Teams);
         }
     }
 }

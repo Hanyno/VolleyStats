@@ -24,6 +24,8 @@
                     Click="ImportButton_OnClick" />
             <Button Content="EXPORT ALL"
                     Click="ExportAllButton_OnClick" />
+            <Button Content="UPLOAD"
+                    Click="UploadButton_OnClick" />
         </StackPanel>
 
         <ListBox x:Name="TeamsList"

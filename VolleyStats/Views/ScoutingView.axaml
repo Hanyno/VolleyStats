@@ -1,0 +1,149 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="VolleyStats.ScoutingView"
+             xmlns:domain="clr-namespace:VolleyStats.Domain">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Margin="10">
+        
+        <!-- Horní panel: Home + Start set + info -->
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="10"
+                    VerticalAlignment="Center">
+            <Button x:Name="HomeButton"
+                    Content="Home"
+                    Click="HomeButton_OnClick"/>
+
+            <Button x:Name="StartSetButton"
+                    Content="Start setu"
+                    Click="StartSetButton_OnClick"/>
+
+            <TextBlock Text="Scouting"
+                       FontSize="24"
+                       Margin="20,0,0,0"/>
+
+            <TextBlock x:Name="MatchInfoTextBlock"
+                       Margin="20,0,0,0"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Skóre -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="*,*"
+              Margin="0,10,0,10">
+            <StackPanel Grid.Column="0"
+                        HorizontalAlignment="Center">
+                <TextBlock x:Name="HomeTeamNameTextBlock"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="HomeTeamScoreTextBlock"
+                           FontSize="28"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        HorizontalAlignment="Center">
+                <TextBlock x:Name="AwayTeamNameTextBlock"
+                           FontSize="16"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="AwayTeamScoreTextBlock"
+                           FontSize="28"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2"
+              ColumnDefinitions="2*,3*"
+              ColumnSpacing="20">
+
+            <!-- Vlevo: zadávání akce -->
+            <StackPanel Grid.Column="0"
+                        Spacing="10">
+                <TextBlock Text="Rally"
+                           FontSize="16"
+                           FontWeight="Bold"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <ComboBox x:Name="ServingTeamComboBox"
+                              Width="160"
+                              SelectionChanged="ServingTeamComboBox_OnSelectionChanged">
+                        <ComboBox.SelectionBoxItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" />
+                            </DataTemplate>
+                        </ComboBox.SelectionBoxItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Player:" Width="80" VerticalAlignment="Center" />
+
+                    <ComboBox x:Name="PlayerComboBox"
+                              Width="160"
+                              IsEnabled="False">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="domain:Player">
+                                <TextBlock Text="{Binding JerseyNumber}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Action:"
+                               VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ActionTypeComboBox"
+                              Width="150">
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Evaluation:"
+                               VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ActionRatingComboBox"
+                              Width="150">
+                    </ComboBox>
+                </StackPanel>
+
+                <Button x:Name="AddActionButton"
+                        Content="Add Action"
+                        Margin="0,10,0,0"
+                        Click="AddActionButton_OnClick"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1"
+                        Spacing="10">
+                <TextBlock Text="End Rally"
+                           FontSize="16"
+                           FontWeight="Bold"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Rally winner:"
+                               VerticalAlignment="Center"/>
+                    <ComboBox x:Name="RallyWinnerComboBox"
+                              Width="180"/>
+                </StackPanel>
+
+                <Button x:Name="EndRallyButton"
+                        Content="End Rally and Save"
+                        Margin="0,5,0,0"
+                        Click="EndRallyButton_OnClick"/>
+
+                <TextBlock Text="Recorded Rallies:"
+                           Margin="0,15,0,0"/>
+
+                <ListBox x:Name="RalliesListBox"
+                         Height="200"/>
+            </StackPanel>
+        </Grid>
+
+        <TextBlock Grid.Row="3"
+                   Text="Scouting Match"
+                   FontStyle="Italic"
+                   HorizontalAlignment="Right"
+                   Margin="0,5,0,0"/>
+    </Grid>
+</UserControl>

@@ -10,7 +10,7 @@ namespace VolleyStats.Enums
     {
         Unknown = 0,
         Error = '=',        // =
-        VeryPositive = '/', // /
+        Over = '/', // /
         Poor = '-',         // -
         Good = '!',         // !
         Positive = '+',     // +

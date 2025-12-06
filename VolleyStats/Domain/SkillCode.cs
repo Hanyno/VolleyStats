@@ -119,7 +119,7 @@ namespace VolleyStats.Domain
             var eval = evalChar switch
             {
                 '=' => EvaluationSymbol.Error,
-                '/' => EvaluationSymbol.VeryPositive,
+                '/' => EvaluationSymbol.Over,
                 '-' => EvaluationSymbol.Poor,
                 '!' => EvaluationSymbol.Good,
                 '+' => EvaluationSymbol.Positive,

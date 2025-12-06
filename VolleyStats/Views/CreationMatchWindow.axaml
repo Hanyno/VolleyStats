@@ -1,0 +1,75 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:domain="clr-namespace:VolleyStats.Domain"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.CreationMatchWindow"
+        Width="400"
+        Height="300"
+        Title="Create match">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <!-- Datum -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Date:" Width="80" VerticalAlignment="Center"/>
+            <DatePicker x:Name="MatchDatePicker"
+                        SelectedDate="{x:Null}" />
+        </StackPanel>
+
+        <!-- Èas -->
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,8">
+            <TextBlock Text="Time:" Width="80" VerticalAlignment="Center"/>
+            <TextBox x:Name="MatchTimeTextBox"
+                     Width="80"
+                     Watermark="18:00" />
+        </StackPanel>
+
+        <!-- Home team -->
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,8">
+            <TextBlock Text="Home team:"
+                       Width="100"
+                       VerticalAlignment="Center"/>
+
+            <ComboBox x:Name="HomeTeamComboBox"
+                      Width="250"
+                      VerticalAlignment="Center">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="domain:Team">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <!-- Away team -->
+        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,0,0,8">
+            <TextBlock Text="Away team:"
+                       Width="100"
+                       VerticalAlignment="Center"/>
+
+            <ComboBox x:Name="AwayTeamComboBox"
+                      Width="250"
+                      VerticalAlignment="Center">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="domain:Team">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <!-- Tlaèítka -->
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="4"
+                    HorizontalAlignment="Right"
+                    Spacing="10">
+            <Button Content="Cancel"
+                    Width="80"
+                    Click="CancelButton_OnClick"/>
+            <Button Content="Save"
+                    Width="80"
+                    Click="SaveButton_OnClick"/>
+        </StackPanel>
+    </Grid>
+</Window>

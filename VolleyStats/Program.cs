@@ -16,6 +16,7 @@ namespace VolleyStats
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             TeamsDatabaseInitializer.EnsureCreated();
+            OfficialDatabaseInitializer.EnsureCreated();
 
             BuildAvaloniaApp()
                 .StartWithClassicDesktopLifetime(args);

@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:domain="clr-namespace:VolleyStats.Domain"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.MatchesWindow"
+        Width="600"
+        Height="400"
+        Title="Planned matches">
+
+    <Grid RowDefinitions="Auto,*">
+        <TextBlock Text="Planned matches"
+                   FontSize="18"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,10"/>
+
+        <ListBox x:Name="MatchesListBox"
+                 Grid.Row="1"
+                 DoubleTapped="MatchesListBox_OnDoubleTapped">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="domain:Match">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock
+                            Width="160"
+                            Text="{Binding StartTime,
+                                           StringFormat='{}{0:dd.MM.yyyy HH:mm}'}" />
+                        <TextBlock Text="{Binding HomeTeam.Name}" />
+                        <TextBlock Text="vs" Margin="5,0"/>
+                        <TextBlock Text="{Binding AwayTeam.Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+</Window>

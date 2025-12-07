@@ -9,10 +9,12 @@ namespace VolleyStats.Views
     {
         private readonly ITeamsService _teamsService;
         private readonly IOfficialStatsService _officialStatsService;
-        public MainWindow(ITeamsService teamsService, IOfficialStatsService officialStatsService)
+        private readonly ITeamAnalysisService _teamAnalysisService;
+        public MainWindow(ITeamsService teamsService, IOfficialStatsService officialStatsService, ITeamAnalysisService teamAnalysisService)
         {
             _teamsService = teamsService;
             _officialStatsService = officialStatsService;
+            _teamAnalysisService = teamAnalysisService;
 
             InitializeComponent();
             ShowHome();
@@ -24,9 +26,12 @@ namespace VolleyStats.Views
 
         public void ShowHome()
         {
-            MainContent.Content = new HomeView(_teamsService, _officialStatsService);
+            MainContent.Content = new HomeView(_teamsService, _officialStatsService, _teamAnalysisService);
         }
 
-
+        public void ShowTeamAnalysis()
+        {
+            MainContent.Content = new TeamAnalysisView(_teamAnalysisService, _officialStatsService);
+        }
     }
 }

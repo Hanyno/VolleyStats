@@ -21,6 +21,149 @@ namespace VolleyStats.Data
             }.ToString();
         }
 
+        public IEnumerable<Match> GetFinishedMatchesForTeam(
+            int teamId,
+            DateTime? fromUtc = null,
+            DateTime? toUtc = null,
+            int? competitionId = null,
+            bool includeHome = true,
+            bool includeAway = true,
+            int? limitLastMatches = null)
+        {
+            if (!includeHome && !includeAway)
+                return Array.Empty<Match>();
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var cmd = connection.CreateCommand();
+
+            var sql = @"
+                SELECT m.Id, m.DateUtc,
+
+                       ht.Id AS HomeId, ht.TeamCode AS HomeCode, ht.Name AS HomeName,
+                       ht.CoachName AS HomeCoach, ht.AssistantCoachName AS HomeAssistant,
+                       ht.Abbreviation AS HomeAbb, ht.CharacterEncoding AS HomeEncoding,
+
+                       at.Id AS AwayId, at.TeamCode AS AwayCode, at.Name AS AwayName,
+                       at.CoachName AS AwayCoach, at.AssistantCoachName AS AwayAssistant,
+                       at.Abbreviation AS AwayAbb, at.CharacterEncoding AS AwayEncoding
+
+                FROM Match m
+                JOIN Teams ht ON ht.Id = m.HomeTeamId
+                JOIN Teams at ON at.Id = m.AwayTeamId
+                WHERE m.IsFinished = 1
+                  AND (m.HomeTeamId = $teamId OR m.AwayTeamId = $teamId)
+            ";
+
+            cmd.Parameters.AddWithValue("$teamId", teamId);
+
+            if (fromUtc.HasValue)
+            {
+                sql += " AND m.DateUtc >= $fromUtc";
+                cmd.Parameters.AddWithValue("$fromUtc",
+                    fromUtc.Value.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
+            }
+
+            if (toUtc.HasValue)
+            {
+                sql += " AND m.DateUtc <= $toUtc";
+                cmd.Parameters.AddWithValue("$toUtc",
+                    toUtc.Value.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture));
+            }
+
+            if (competitionId.HasValue)
+            {
+                sql += " AND m.CompetitionId = $competitionId";
+                cmd.Parameters.AddWithValue("$competitionId", competitionId.Value);
+            }
+
+            if (includeHome && !includeAway)
+            {
+                sql += " AND m.HomeTeamId = $teamId";
+            }
+            else if (!includeHome && includeAway)
+            {
+                sql += " AND m.AwayTeamId = $teamId";
+            }
+
+            sql += " ORDER BY m.DateUtc DESC";
+
+            if (limitLastMatches.HasValue)
+            {
+                sql += " LIMIT $limit";
+                cmd.Parameters.AddWithValue("$limit", limitLastMatches.Value);
+            }
+
+            cmd.CommandText = sql;
+
+            using var reader = cmd.ExecuteReader();
+            var list = new List<Match>();
+
+            var playersCache = new Dictionary<int, List<Player>>();
+
+            while (reader.Read())
+            {
+                var matchId = reader.GetInt32(0);
+                var dateUtc = reader.GetString(1);
+                var startTime = DateTime.Parse(dateUtc, null, DateTimeStyles.RoundtripKind);
+
+                var homeId = reader.GetInt32(2);
+                var homeTeam = new Team
+                {
+                    Id = homeId,
+                    TeamCode = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    Name = reader.GetString(4),
+                    CoachName = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    AssistantCoachName = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Abbreviation = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    CharacterEncoding = reader.IsDBNull(8) ? null : reader.GetInt32(8),
+
+                    NameHex = null,
+                    CoachNameHex = null,
+                    AssistantCoachNameHex = null,
+                    AbbreviationHex = null
+                };
+
+                var awayId = reader.GetInt32(9);
+                var awayTeam = new Team
+                {
+                    Id = awayId,
+                    TeamCode = reader.IsDBNull(10) ? "" : reader.GetString(10),
+                    Name = reader.GetString(11),
+                    CoachName = reader.IsDBNull(12) ? null : reader.GetString(12),
+                    AssistantCoachName = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    Abbreviation = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    CharacterEncoding = reader.IsDBNull(15) ? null : reader.GetInt32(15),
+
+                    NameHex = null,
+                    CoachNameHex = null,
+                    AssistantCoachNameHex = null,
+                    AbbreviationHex = null
+                };
+
+                homeTeam.Players = GetPlayersForTeamCached(connection, homeId, playersCache);
+                awayTeam.Players = GetPlayersForTeamCached(connection, awayId, playersCache);
+
+                var match = new Match
+                {
+                    Id = matchId,
+                    StartTime = startTime,
+                    HomeTeam = homeTeam,
+                    AwayTeam = awayTeam,
+
+                    MatchCode = "",
+                    Season = "",
+                    CompetitionCode = "",
+                    IsFinished = true
+                };
+
+                list.Add(match);
+            }
+
+            return list;
+        }
+
         public IEnumerable<Match> GetPlannedMatches()
         {
             using var connection = new SqliteConnection(_connectionString);
@@ -56,9 +199,6 @@ namespace VolleyStats.Data
                 var dateUtc = reader.GetString(1);
                 var startTime = DateTime.Parse(dateUtc, null, DateTimeStyles.RoundtripKind);
 
-                // -----------------------
-                // HOME TEAM
-                // -----------------------
                 var homeId = reader.GetInt32(2);
                 var homeTeam = new Team
                 {
@@ -76,9 +216,6 @@ namespace VolleyStats.Data
                     AbbreviationHex = null
                 };
 
-                // -----------------------
-                // AWAY TEAM
-                // -----------------------
                 var awayId = reader.GetInt32(9);
                 var awayTeam = new Team
                 {
@@ -96,15 +233,9 @@ namespace VolleyStats.Data
                     AbbreviationHex = null
                 };
 
-                // -----------------------
-                // DOLOADIT HRÁČE (SOUPISKY)
-                // -----------------------
                 homeTeam.Players = GetPlayersForTeamCached(connection, homeId, playersCache);
                 awayTeam.Players = GetPlayersForTeamCached(connection, awayId, playersCache);
 
-                // -----------------------
-                // BUILD MATCH
-                // -----------------------
                 var match = new Match
                 {
                     Id = matchId,
@@ -133,7 +264,14 @@ namespace VolleyStats.Data
             using (var cmd = connection.CreateCommand())
             {
                 cmd.CommandText = @"
-                    SELECT Id, Number, HomeScore, AwayScore
+                    SELECT Id,
+                           Number,
+                           HomeScore,
+                           AwayScore,
+                           HomeTimeouts,
+                           AwayTimeouts,
+                           HomeSubstitutions,
+                           AwaySubstitutions
                     FROM MatchSet
                     WHERE MatchId = $matchId
                     ORDER BY Number;
@@ -151,7 +289,12 @@ namespace VolleyStats.Data
                         Match = match,
                         Number = reader.GetInt32(1),
                         HomeScore = reader.GetInt32(2),
-                        AwayScore = reader.GetInt32(3)
+                        AwayScore = reader.GetInt32(3),
+
+                        HomeTimeouts = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
+                        AwayTimeouts = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
+                        HomeSubstitutions = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                        AwaySubstitutions = reader.IsDBNull(7) ? 0 : reader.GetInt32(7)
                     };
 
                     sets.Add(set);
@@ -222,7 +365,8 @@ namespace VolleyStats.Data
                        Side,
                        Skill,
                        Eval,
-                       RawCode
+                       RawCode,
+                       PlayerId
                 FROM MatchEvent
                 WHERE RallyId = $rallyId
                 ORDER BY OrderInRally;
@@ -241,7 +385,9 @@ namespace VolleyStats.Data
                     Side = (TeamSide)reader.GetInt32(2),
                     Skill = Enum.Parse<BasicSkill>(reader.GetString(3)),
                     Eval = Enum.Parse<EvaluationSymbol>(reader.GetString(4)),
-                    RawCode = reader.IsDBNull(5) ? null : reader.GetString(5)
+                    RawCode = reader.IsDBNull(5) ? null : reader.GetString(5),
+
+                    PlayerId = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6)
                 };
 
                 rally.Events.Add(ev);
@@ -268,24 +414,24 @@ namespace VolleyStats.Data
         {
             using var cmd = connection.CreateCommand();
             cmd.CommandText = @"
-        SELECT Id,
-               TeamId,
-               JerseyNumber,
-               ExternalPlayerId,
-               LastName,
-               FirstName,
-               BirthDate,
-               HeightCm,
-               Position,
-               PlayerRole,
-               NickName,
-               IsForeign,
-               TransferredOut,
-               BirthDateSerial
-        FROM Players
-        WHERE TeamId = $teamId
-        ORDER BY JerseyNumber;
-    ";
+                SELECT Id,
+                       TeamId,
+                       JerseyNumber,
+                       ExternalPlayerId,
+                       LastName,
+                       FirstName,
+                       BirthDate,
+                       HeightCm,
+                       Position,
+                       PlayerRole,
+                       NickName,
+                       IsForeign,
+                       TransferredOut,
+                       BirthDateSerial
+                FROM Players
+                WHERE TeamId = $teamId
+                ORDER BY JerseyNumber;
+            ";
             cmd.Parameters.AddWithValue("$teamId", teamId);
 
             using var reader = cmd.ExecuteReader();
@@ -348,14 +494,17 @@ namespace VolleyStats.Data
                 using (var cmd = connection.CreateCommand())
                 {
                     cmd.CommandText = @"
-                    UPDATE Match
-                    SET IsFinished = $isFinished
-                    WHERE Id = $matchId;
-                ";
+                        UPDATE ""Match""
+                        SET IsFinished = $isFinished
+                        WHERE Id = $matchId;
+                    ";
+
                     cmd.Parameters.AddWithValue("$isFinished", match.IsFinished ? 1 : 0);
                     cmd.Parameters.AddWithValue("$matchId", match.Id);
+
                     cmd.ExecuteNonQuery();
                 }
+
 
                 tx.Commit();
             }
@@ -397,14 +546,37 @@ namespace VolleyStats.Data
         {
             using var cmd = connection.CreateCommand();
             cmd.CommandText = @"
-                    INSERT INTO MatchSet (MatchId, Number, HomeScore, AwayScore)
-                    VALUES ($matchId, $number, $homeScore, $awayScore);
-                ";
+                INSERT INTO MatchSet (
+                    MatchId,
+                    Number,
+                    HomeScore,
+                    AwayScore,
+                    HomeTimeouts,
+                    AwayTimeouts,
+                    HomeSubstitutions,
+                    AwaySubstitutions
+                )
+                VALUES (
+                    $matchId,
+                    $number,
+                    $homeScore,
+                    $awayScore,
+                    $homeTimeouts,
+                    $awayTimeouts,
+                    $homeSubs,
+                    $awaySubs
+                );
+            ";
 
             cmd.Parameters.AddWithValue("$matchId", matchId);
             cmd.Parameters.AddWithValue("$number", set.Number);
             cmd.Parameters.AddWithValue("$homeScore", set.HomeScore);
             cmd.Parameters.AddWithValue("$awayScore", set.AwayScore);
+
+            cmd.Parameters.AddWithValue("$homeTimeouts", set.HomeTimeouts);
+            cmd.Parameters.AddWithValue("$awayTimeouts", set.AwayTimeouts);
+            cmd.Parameters.AddWithValue("$homeSubs", set.HomeSubstitutions);
+            cmd.Parameters.AddWithValue("$awaySubs", set.AwaySubstitutions);
 
             cmd.ExecuteNonQuery();
 
@@ -413,6 +585,7 @@ namespace VolleyStats.Data
             var setId = Convert.ToInt32(cmd.ExecuteScalar());
             return setId;
         }
+
 
         private static int InsertRally(SqliteConnection connection, int matchSetId, Rally rally)
         {
@@ -458,12 +631,6 @@ namespace VolleyStats.Data
                     PlayerId,
                     Skill,
                     Eval,
-                    AttackCombinationCode,
-                    SetterCallCode,
-                    AttackZoneCode,
-                    SubZoneCode,
-                    ExtraFlags,
-                    RealTime,
                     RawCode
                 )
                 VALUES (
@@ -474,12 +641,6 @@ namespace VolleyStats.Data
                     $playerId,
                     $skill,
                     $eval,
-                    $attackCombinationCode,
-                    $setterCallCode,
-                    $attackZoneCode,
-                    $subZoneCode,
-                    $extraFlags,
-                    $realTime,
                     $rawCode
                 );
             ";
@@ -511,22 +672,6 @@ namespace VolleyStats.Data
 
             cmd.Parameters.AddWithValue("$skill", ev.Skill.ToString());
             cmd.Parameters.AddWithValue("$eval", ev.Eval.ToString());
-
-            cmd.Parameters.AddWithValue("$attackCombinationCode",
-                (object?)ev.AttackCombinationCode ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$setterCallCode",
-                (object?)ev.SetterCallCode ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$attackZoneCode",
-                (object?)ev.AttackZoneCode ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$subZoneCode",
-                (object?)ev.SubZoneCode ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$extraFlags",
-                (object?)ev.ExtraFlags ?? DBNull.Value);
-
-            if (ev.RealTime.HasValue)
-                cmd.Parameters.AddWithValue("$realTime", ev.RealTime.Value.ToString("o"));
-            else
-                cmd.Parameters.AddWithValue("$realTime", DBNull.Value);
 
             cmd.Parameters.AddWithValue("$rawCode",
                 (object?)ev.RawCode ?? DBNull.Value);
@@ -927,6 +1072,7 @@ namespace VolleyStats.Data
 
             return list;
         }
+
 
 
         private static string ReadString(SqliteDataReader r, string column)

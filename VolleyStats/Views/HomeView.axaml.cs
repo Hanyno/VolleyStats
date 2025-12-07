@@ -11,11 +11,13 @@ public partial class HomeView : UserControl
 {
     private readonly ITeamsService _teamsService;
     private readonly IOfficialStatsService _officialStatsService;
+    private readonly ITeamAnalysisService _teamAnalysisService;
 
-    public HomeView(ITeamsService teamsService, IOfficialStatsService officialStatsService)
+    public HomeView(ITeamsService teamsService, IOfficialStatsService officialStatsService, ITeamAnalysisService teamAnalysisService)
     {
         _teamsService = teamsService;
         _officialStatsService = officialStatsService;
+        _teamAnalysisService = teamAnalysisService;
         InitializeComponent();
     }
 
@@ -58,6 +60,6 @@ public partial class HomeView : UserControl
 
     private void AnalysisButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        // TODO
+        Content = new TeamAnalysisView(_teamAnalysisService, _officialStatsService);
     }
 }

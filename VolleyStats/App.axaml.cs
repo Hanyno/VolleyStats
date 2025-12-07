@@ -15,6 +15,7 @@ namespace VolleyStats
     {
         private ITeamsService _teamsService;
         private IOfficialStatsService _officialStatsService;
+        private ITeamAnalysisService _teamAnalysisService;
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -27,13 +28,14 @@ namespace VolleyStats
 
             _officialStatsService = new OfficialStatsService(officialRepository);
             _teamsService = new TeamsService(teamsRepository);
+            _teamAnalysisService = new TeamAnalysisService(officialRepository);
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
-                desktop.MainWindow = new MainWindow(_teamsService, _officialStatsService)
+                desktop.MainWindow = new MainWindow(_teamsService, _officialStatsService, _teamAnalysisService)
                 {
                     //DataContext = new MainWindowViewModel(),          // later will be usefull when refactoring to MVVM
                 };

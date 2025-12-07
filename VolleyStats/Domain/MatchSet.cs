@@ -16,6 +16,11 @@ namespace VolleyStats.Domain
         public int HomeScore { get; set; }
         public int AwayScore { get; set; }
 
+        public int HomeTimeouts { get; set; }
+        public int AwayTimeouts { get; set; }
+        public int HomeSubstitutions { get; set; }
+        public int AwaySubstitutions { get; set; }
+
         public List<Rally> Rallies { get; } = new();
     }
 }

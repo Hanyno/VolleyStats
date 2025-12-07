@@ -8,7 +8,7 @@ namespace VolleyStats.Enums
 {
     public enum TeamSide
     {
-        Home = '*',
-        Away = 'a'
+        Home = 0,               // *
+        Away = 1                // a
     }
 }

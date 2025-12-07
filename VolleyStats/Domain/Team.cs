@@ -24,5 +24,10 @@ namespace VolleyStats.Domain
         public string? AbbreviationHex { get; set; }
 
         public List<Player> Players { get; set; } = new();
+
+        public override string ToString()
+        {
+            return $"{Name}";
+        }
     }
 }

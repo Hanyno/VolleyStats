@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="VolleyStats.Views.TeamAnalysisFilterView">
+
+    <Border Padding="10" BorderThickness="1" CornerRadius="4">
+        <Grid ColumnDefinitions="Auto,*,Auto,*,Auto,*,Auto,Auto"
+              RowDefinitions="Auto,Auto"
+              ColumnSpacing="8"
+              RowSpacing="6">
+
+            <TextBlock Grid.ColumnSpan="8"
+                       Text="Team analysis"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Time:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,4,0"/>
+            <ComboBox Grid.Row="1" Grid.Column="1"
+                      x:Name="PeriodComboBox"
+                      Width="160"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="2"
+                       Text="Team:"
+                       VerticalAlignment="Center"
+                       Margin="12,0,4,0"/>
+            <ComboBox Grid.Row="1" Grid.Column="3"
+                      x:Name="TeamComboBox"
+                      Width="200"/>
+
+            <Button Grid.Row="2" Grid.Column="8"
+                    x:Name="GenerateButton"
+                    Content="Generate Analysis"
+                    HorizontalAlignment="Right"
+                    Margin="0,8,0,0"
+                    Click="GenerateButton_OnClick"/>
+        </Grid>
+    </Border>
+</UserControl>

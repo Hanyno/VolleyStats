@@ -96,11 +96,15 @@ namespace VolleyStats.Data
             );
 
             CREATE TABLE IF NOT EXISTS MatchSet (
-                Id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                MatchId   INTEGER NOT NULL,
-                Number    INTEGER NOT NULL,
-                HomeScore INTEGER NOT NULL,
-                AwayScore INTEGER NOT NULL,
+                Id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                MatchId             INTEGER NOT NULL,
+                Number              INTEGER NOT NULL,
+                HomeScore           INTEGER NOT NULL,
+                AwayScore           INTEGER NOT NULL,
+                HomeTimeouts        INTEGER NOT NULL,
+                AwayTimeouts        INTEGER NOT NULL,
+                HomeSubstitutions   INTEGER NOT NULL,
+                AwaySubstitutions   INTEGER NOT NULL,
                 FOREIGN KEY (MatchId) REFERENCES Match(Id)
             );
 
@@ -122,27 +126,14 @@ namespace VolleyStats.Data
                 RallyId     INTEGER NOT NULL,
                 OrderInRally INTEGER NOT NULL,
 
-                -- strana hřiště v dané výměně (0 = Home, 1 = Away)
                 Side        INTEGER NOT NULL,
 
                 TeamId      INTEGER NOT NULL,
                 PlayerId    INTEGER,
 
-                -- základní DV parametry
-                Skill       TEXT NOT NULL,   -- název enumu Skill, např. ""Serve"", ""Attack""
-                Eval        TEXT NOT NULL,   -- název enumu EvaluationSymbol, např. ""PlusPlus"", ""Minus"", ""#""
+                Skill       TEXT NOT NULL,
+                Eval        TEXT NOT NULL,
 
-                -- rozšířené DV parametry
-                AttackCombinationCode TEXT,
-                SetterCallCode        TEXT,
-                AttackZoneCode        TEXT,
-                SubZoneCode           TEXT,
-                ExtraFlags            TEXT,
-
-                -- reálný čas akce
-                RealTime    TEXT,           -- ISO 8601, např. '2025-11-30T18:05:23.1234567Z'
-
-                -- kompletní DV kód
                 RawCode     TEXT,
 
                 FOREIGN KEY (RallyId)  REFERENCES Rally(Id),

@@ -30,5 +30,10 @@ namespace VolleyStats.Domain
         public string? NicknameHex { get; set; }
 
         public Team? Team { get; set; }
+
+        public override string ToString()
+        {
+            return $"{JerseyNumber} – {FirstName} {LastName}";
+        }
     }
 }

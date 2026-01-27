@@ -10,7 +10,6 @@
         Title="VolleyStats">
 
     <Grid>
-        <!-- Tlaèítko Teams vpravo nahoøe -->
         <Button x:Name="TeamsButton"
                 Content="Teams"
                 HorizontalAlignment="Right"
@@ -18,7 +17,6 @@
                 Margin="0,10,10,0"
                 Click="TeamsButton_OnClick" />
 
-        <!-- Pùvodní text uprostøed okna (mùžeš smazat) -->
         <TextBlock Text="VolleyStats"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" />

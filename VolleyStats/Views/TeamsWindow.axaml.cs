@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using VolleyStats.Data;
+using VolleyStats.Data.Repositories;
 using VolleyStats.Domain;
 
 namespace VolleyStats.Views
@@ -98,7 +98,6 @@ namespace VolleyStats.Views
                     return;
                 }
 
-                // Uložení týmu do DB
                 _repository.SaveTeam(team);
 
                 LoadTeams();
@@ -150,9 +149,9 @@ namespace VolleyStats.Views
         /// lines = celý obsah souboru po øádcích.
         /// </summary>
         private bool TryParseTeamFromSq(
-    string[] lines,
-    out Team team,
-    out string errorMessage)
+            string[] lines,
+            out Team team,
+            out string errorMessage)
         {
             team = null!;
             errorMessage = string.Empty;
@@ -211,7 +210,7 @@ namespace VolleyStats.Views
                         player.JerseyNumber = shirtNumber;
 
                     // 1: id hráèe
-                    player.ExternalPlayerId = parts[1].Trim();  // pøizpùsob si názvu property
+                    player.ExternalPlayerId = parts[1].Trim(); 
 
                     // 2: pøíjmení
                     player.LastName = parts[2].Trim();

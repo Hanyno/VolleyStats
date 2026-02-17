@@ -1,98 +1,128 @@
-ï»¿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using VolleyStats.Enums;
+using System;
+using System.Globalization;
 
 namespace VolleyStats.Domain
 {
+    public enum TeamSide
+    {
+        Home,
+        Away
+    }
+
+    public enum BasicSkill
+    {
+        Unknown = 0,
+        Serve = 'S',
+        Reception = 'R',
+        Attack = 'A',
+        Block = 'B',
+        Dig = 'D',
+        Set = 'E',
+        FreeBall = 'F'
+    }
+
+    public enum HitType
+    {
+        Unknown = 0,
+        High = 'H',
+        Medium = 'M',
+        Quick = 'Q',
+        Tense = 'T',
+        Super = 'U',
+        Fast = 'N',
+        Other = 'O'
+    }
+
+    public enum Evaluation
+    {
+        Unknown = 0,
+        Error = '=',
+        VeryPositive = '/',
+        Negative = '-',
+        Positive = '+',
+        AceOrDirect = '#'
+    }
+
     /// <summary>
-    /// ZÃ¡klad pro vÅ¡echny kÃ³dy ÃºderÅ¯ (servis, pÅ™Ã­jem, Ãºtok, blok, dig, set, free ball).
-    /// Obsahuje TEAM, PLAYER NUMBER, BASIC SKILL, TYPE OF HIT, EVALUATION.
+    /// Rozšiøuje <see cref="Code"/> o parsování hlavního kódu (team, èíslo hráèe, skill, typ úderu, evaluaci).
     /// </summary>
     public abstract class SkillCode : Code
     {
         public TeamSide Team { get; }
         public int PlayerNumber { get; }
         public BasicSkill Skill { get; }
-        public HitType HitType { get; }
-        public EvaluationSymbol Evaluation { get; }
+        public HitType TypeOfHit { get; }
+        public Evaluation Evaluation { get; }
 
-        public char? ExtendedSymbolRaw { get; }
-        public string CustomCode { get; }
-
-        protected SkillCode(
-            string rawLine,
-            string kod,
-            char sp,
-            char pr,
-            CoordinatesPair? start,
-            CoordinatesPair? middle,
-            CoordinatesPair? end,
-            DateTime? recordedAt,
-            int? setNumber,
-            int? homeSetterZone,
-            int? awaySetterZone,
-            string videoFile,
-            int? videoSecond,
-            int[] homeZones,
-            int[] awayZones)
-            : base(rawLine, kod, sp, pr,
-                   start, middle, end,
-                   recordedAt, setNumber,
-                   homeSetterZone, awaySetterZone,
-                   videoFile, videoSecond,
-                   homeZones, awayZones)
+        protected SkillCode(string rawLine) : base(rawLine)
         {
-            (Team, PlayerNumber, Skill, HitType, Evaluation) = ParseMainCode(kod);
-            (ExtendedSymbolRaw, CustomCode) = ParseExtendedAndCustom(kod);
+            var main = RawCode ?? string.Empty;
+            var index = 0;
+
+            Team = ParseTeam(main, ref index);
+            PlayerNumber = ParsePlayerNumber(main, ref index);
+            Skill = ParseSkill(main, ref index);
+            TypeOfHit = ParseHitType(main, ref index);
+            Evaluation = ParseEvaluation(main, ref index);
         }
 
-        private static (TeamSide, int, BasicSkill, HitType, EvaluationSymbol) ParseMainCode(string kod)
+        internal static char PeekSkillLetter(string rawLine)
         {
-            var s = kod.Trim();
+            var main = (rawLine ?? string.Empty).Split(';')[0];
+            var index = 0;
+            ParseTeam(main, ref index);
+            ParsePlayerNumber(main, ref index);
+            return index < main.Length ? char.ToUpperInvariant(main[index]) : '\0';
+        }
 
-            TeamSide team =
-                s.StartsWith("*") ? TeamSide.Home :
-                s.StartsWith("a", StringComparison.OrdinalIgnoreCase) ? TeamSide.Away :
-                TeamSide.Home;
-
-            if (team == TeamSide.Home)
-                s = s.TrimStart('*');
-            else if (team == TeamSide.Away)
-                s = s.TrimStart('a', 'A');
-
-            int idx = 0;
-            while (idx < s.Length && char.IsDigit(s[idx]))
-                idx++;
-
-            int player = -1;
-            if (idx > 0 && int.TryParse(s[..idx], out var num))
-                player = num;
-
-            char? skillChar = null;
-            char? typeChar = null;
-            char? evalChar = null;
-
-            if (idx < s.Length)
+        private static TeamSide ParseTeam(string main, ref int index)
+        {
+            if (index < main.Length)
             {
-                skillChar = s[idx];
-                idx++;
-            }
-            if (idx < s.Length)
-            {
-                typeChar = s[idx];
-                idx++;
-            }
-            if (idx < s.Length)
-            {
-                evalChar = s[idx];
-                idx++;
+                var c = main[index];
+                if (c == 'a' || c == 'A')
+                {
+                    index++;
+                    return TeamSide.Away;
+                }
+
+                if (c == '*')
+                {
+                    index++;
+                    return TeamSide.Home;
+                }
             }
 
-            var skill = skillChar switch
+            return TeamSide.Home;
+        }
+
+        private static int ParsePlayerNumber(string main, ref int index)
+        {
+            var start = index;
+            while (index < main.Length && index - start < 2 && char.IsDigit(main[index]))
+            {
+                index++;
+            }
+
+            var spanLength = index - start;
+            if (spanLength == 0)
+                return 0;
+
+            var numberSpan = main.Substring(start, spanLength);
+            if (int.TryParse(numberSpan, NumberStyles.Integer, CultureInfo.InvariantCulture, out var num))
+                return num;
+
+            return 0;
+        }
+
+        private static BasicSkill ParseSkill(string main, ref int index)
+        {
+            if (index >= main.Length)
+                return BasicSkill.Unknown;
+
+            var c = char.ToUpperInvariant(main[index]);
+            index++;
+            return c switch
             {
                 'S' => BasicSkill.Serve,
                 'R' => BasicSkill.Reception,
@@ -103,8 +133,16 @@ namespace VolleyStats.Domain
                 'F' => BasicSkill.FreeBall,
                 _ => BasicSkill.Unknown
             };
+        }
 
-            var hitType = typeChar switch
+        private static HitType ParseHitType(string main, ref int index)
+        {
+            if (index >= main.Length)
+                return HitType.Unknown;
+
+            var c = char.ToUpperInvariant(main[index]);
+            index++;
+            return c switch
             {
                 'H' => HitType.High,
                 'M' => HitType.Medium,
@@ -113,98 +151,80 @@ namespace VolleyStats.Domain
                 'U' => HitType.Super,
                 'N' => HitType.Fast,
                 'O' => HitType.Other,
-                _ => HitType.None
+                _ => HitType.Unknown
             };
-
-            var eval = evalChar switch
-            {
-                '=' => EvaluationSymbol.Error,
-                '/' => EvaluationSymbol.VeryPositive,
-                '-' => EvaluationSymbol.Poor,
-                '!' => EvaluationSymbol.Good,
-                '+' => EvaluationSymbol.Positive,
-                '#' => EvaluationSymbol.Point,
-                _ => EvaluationSymbol.Unknown
-            };
-
-            return (team, player, skill, hitType, eval);
         }
 
-        private static (char? ext, string custom) ParseExtendedAndCustom(string kod)
+        private static Evaluation ParseEvaluation(string main, ref int index)
         {
-            if (string.IsNullOrWhiteSpace(kod))
-                return (null, string.Empty);
+            if (index >= main.Length)
+                return Evaluation.Unknown;
 
-            var core = kod.Split(';')[0].Trim();
-
-            int idx = 0;
-
-            if (idx < core.Length && (core[idx] == '*' || core[idx] == 'a' || core[idx] == 'A'))
-                idx++;
-
-            while (idx < core.Length && char.IsDigit(core[idx]))
-                idx++;
-
-            if (idx + 3 > core.Length)
-                return (null, string.Empty);
-
-            idx += 3;
-
-            if (idx >= core.Length)
-                return (null, string.Empty);
-
-            var suffix = core.Substring(idx);
-
-            string extras;
-            var zoneMatch = Regex.Match(suffix, @"~~~(\d{2}[A-Za-z]?)");
-            if (zoneMatch.Success)
+            var c = main[index];
+            index++;
+            return c switch
             {
-                int endOfZone = zoneMatch.Index + zoneMatch.Length;
-                if (endOfZone >= suffix.Length)
-                    return (null, string.Empty);
-
-                extras = suffix.Substring(endOfZone);
-            }
-            else
-            {
-                extras = suffix;
-            }
-
-            if (string.IsNullOrEmpty(extras))
-                return (null, string.Empty);
-
-            int tildeCount = 0;
-            while (tildeCount < extras.Length && extras[tildeCount] == '~')
-                tildeCount++;
-
-            var afterTildes = extras.Substring(tildeCount);
-            if (afterTildes.Length == 0)
-                return (null, string.Empty);
-
-            if (afterTildes.Length == 1 && tildeCount >= 2)
-            {
-                return (afterTildes[0], string.Empty);
-            }
-
-            if (tildeCount >= 3 && !char.IsDigit(afterTildes[0]))
-            {
-                var customOnly = afterTildes;
-                if (customOnly.Length > 5)
-                    customOnly = customOnly[..5];
-                return (null, customOnly);
-            }
-
-            char extChar = afterTildes[0];
-            string custom = afterTildes[1..];
-            if (custom.Length > 5)
-                custom = custom[..5];
-
-            return (extChar, custom);
+                '=' => Evaluation.Error,
+                '/' => Evaluation.VeryPositive,
+                '-' => Evaluation.Negative,
+                '+' => Evaluation.Positive,
+                '#' => Evaluation.AceOrDirect,
+                _ => Evaluation.Unknown
+            };
         }
+    }
 
+    public sealed class ServeCode : SkillCode
+    {
+        public ServeCode(string rawLine) : base(rawLine) { }
+    }
 
+    public sealed class ReceptionCode : SkillCode
+    {
+        public ReceptionCode(string rawLine) : base(rawLine) { }
+    }
 
-        public override string ToString()
-            => $"{GetType().Name}: {Team} #{PlayerNumber} {Skill} {HitType} {Evaluation} ({RawCode})";
+    public sealed class AttackCode : SkillCode
+    {
+        public AttackCode(string rawLine) : base(rawLine) { }
+    }
+
+    public sealed class BlockCode : SkillCode
+    {
+        public BlockCode(string rawLine) : base(rawLine) { }
+    }
+
+    public sealed class DigCode : SkillCode
+    {
+        public DigCode(string rawLine) : base(rawLine) { }
+    }
+
+    public sealed class SetCode : SkillCode
+    {
+        public SetCode(string rawLine) : base(rawLine) { }
+    }
+
+    public sealed class FreeBallCode : SkillCode
+    {
+        public FreeBallCode(string rawLine) : base(rawLine) { }
+    }
+
+    public static class SkillCodeFactory
+    {
+        public static SkillCode? Create(string rawLine)
+        {
+            var skillLetter = SkillCode.PeekSkillLetter(rawLine);
+            return skillLetter switch
+            {
+                'S' => new ServeCode(rawLine),
+                'R' => new ReceptionCode(rawLine),
+                'A' => new AttackCode(rawLine),
+                'B' => new BlockCode(rawLine),
+                'D' => new DigCode(rawLine),
+                'E' => new SetCode(rawLine),
+                'F' => new FreeBallCode(rawLine),
+                _ => null
+            };
+        }
     }
 }

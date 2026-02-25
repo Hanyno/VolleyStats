@@ -138,10 +138,6 @@ namespace VolleyStats.ViewModels
                 AssistantCoachName = team.AssistantCoachName,
                 Abbreviation = team.Abbreviation,
                 CharacterEncoding = team.CharacterEncoding,
-                NameHex = team.NameHex,
-                CoachNameHex = team.CoachNameHex,
-                AssistantCoachNameHex = team.AssistantCoachNameHex,
-                AbbreviationHex = team.AbbreviationHex
             };
 
             if (team.Players != null)

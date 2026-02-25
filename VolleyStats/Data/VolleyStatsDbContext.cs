@@ -61,10 +61,6 @@ namespace VolleyStats.Data
                 e.Property(t => t.Abbreviation);
                 e.Property(t => t.CharacterEncoding);
 
-                e.Ignore(t => t.NameHex);
-                e.Ignore(t => t.CoachNameHex);
-                e.Ignore(t => t.AssistantCoachNameHex);
-                e.Ignore(t => t.AbbreviationHex);
 
                 e.HasMany(t => t.Players)
                  .WithOne(p => p.Team)

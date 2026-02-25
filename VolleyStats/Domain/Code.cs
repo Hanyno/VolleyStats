@@ -6,7 +6,7 @@ using System.Linq;
 namespace VolleyStats.Domain
 {
     /// <summary>
-    /// Základní reprezentace kódu akce z DataVolley (.sq) řádku.
+    /// Základní reprezentace kódu akce z DataVolley řádku.
     /// Odvozené třídy (servis, útok, nahrávka, atd.) mohou stavět nad touto parsovanou kostrou.
     /// </summary>
     public abstract class Code

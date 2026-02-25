@@ -210,10 +210,6 @@ namespace VolleyStats.Data.Repositories
                 team.AssistantCoachName ?? string.Empty,
                 team.Abbreviation ?? string.Empty,
                 team.CharacterEncoding?.ToString() ?? string.Empty,
-                team.NameHex ?? string.Empty,
-                team.CoachNameHex ?? string.Empty,
-                team.AssistantCoachNameHex ?? string.Empty,
-                team.AbbreviationHex ?? string.Empty
             };
 
             lines.Add(string.Join('\t', teamFields));
@@ -336,10 +332,6 @@ namespace VolleyStats.Data.Repositories
             existingTeam.AssistantCoachName = team.AssistantCoachName;
             existingTeam.Abbreviation = team.Abbreviation;
             existingTeam.CharacterEncoding = team.CharacterEncoding;
-            existingTeam.NameHex = team.NameHex;
-            existingTeam.CoachNameHex = team.CoachNameHex;
-            existingTeam.AssistantCoachNameHex = team.AssistantCoachNameHex;
-            existingTeam.AbbreviationHex = team.AbbreviationHex;
 
             var incomingPlayers = team.Players;
             var incomingById = incomingPlayers

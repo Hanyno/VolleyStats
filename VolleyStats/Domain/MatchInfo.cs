@@ -18,7 +18,12 @@ namespace VolleyStats.Domain
         public int CharEncoding { get; set; }
         // idk neco tam je 2
         // second line in dvw
+        public string? idk1 { get; set; }
+        public string? idk2 { get; set; }
         public int WeirdDate { get; set; }
+        public string? idk3 { get; set; }
+        public string? idk4 { get; set; }
+        public string? EndTime { get; set; }
 
     }
 }

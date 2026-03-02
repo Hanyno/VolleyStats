@@ -9,8 +9,7 @@ namespace VolleyStats.Domain
         // first line in dvw section [3MORE]
         public string? Referees { get; set; }
         public int? Spectators { get; set; }
-        // TODO: rename it according to data volley
-        public int? IdkNeco { get; set; }
+        public int? Receipts { get; set; }
         public string? City { get; set; }
         public string? Hall { get; set; }
         public string? Scout { get; set; }

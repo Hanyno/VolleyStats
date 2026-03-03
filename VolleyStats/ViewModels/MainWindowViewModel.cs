@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using VolleyStats.Data;
 using VolleyStats.Data.Repositories;
-using VolleyStats.Domain;
 
 namespace VolleyStats.ViewModels
 {
@@ -15,98 +10,81 @@ namespace VolleyStats.ViewModels
     {
         private readonly MatchSummaryLoader _matchSummaryLoader;
         private readonly TeamsRepository _teamsRepository;
-        private List<Team> _teamsCache = new();
 
-        public ObservableCollection<string> AvailableSeasons { get; } = new();
-        public ObservableCollection<MatchListItemViewModel> Matches { get; } = new();
+        public ObservableCollection<TabItemViewModel> Tabs { get; } = new();
 
-        private string? _selectedSeason;
-        public string? SelectedSeason
+        private TabItemViewModel? _selectedTab;
+        public TabItemViewModel? SelectedTab
         {
-            get => _selectedSeason;
-            set
-            {
-                if (SetProperty(ref _selectedSeason, value))
-                {
-                    _ = LoadMatchesAsync();
-                }
-            }
+            get => _selectedTab;
+            set => SetProperty(ref _selectedTab, value);
         }
 
-        private string? _teamFilter;
-        public string? TeamFilter
-        {
-            get => _teamFilter;
-            private set
-            {
-                if (SetProperty(ref _teamFilter, value))
-                {
-                    OnPropertyChanged(nameof(TeamFilterButtonText));
-                    OnPropertyChanged(nameof(HasTeamFilter));
-                }
-            }
-        }
-
-        public bool HasTeamFilter => !string.IsNullOrWhiteSpace(TeamFilter);
-        public string TeamFilterButtonText => HasTeamFilter ? $"Tým: {TeamFilter}" : "Vybrat tým";
-
-        public IAsyncRelayCommand LoadMatchesCommand { get; }
-        public IRelayCommand ClearTeamFilterCommand { get; }
+        public IRelayCommand AddTabCommand { get; }
 
         public MainWindowViewModel(MatchSummaryLoader matchSummaryLoader, TeamsRepository teamsRepository)
         {
             _matchSummaryLoader = matchSummaryLoader;
             _teamsRepository = teamsRepository;
 
-            LoadMatchesCommand = new AsyncRelayCommand(LoadMatchesAsync);
-            ClearTeamFilterCommand = new RelayCommand(ClearTeamFilter);
+            AddTabCommand = new RelayCommand(AddTab);
         }
 
         public async Task InitializeAsync()
         {
-            _teamsCache = _teamsRepository.GetAllTeamsWithPlayers().ToList();
-            LoadSeasons();
-            await LoadMatchesAsync();
-        }
-
-        private void LoadSeasons()
-        {
-            AvailableSeasons.Clear();
-
-            foreach (var season in _matchSummaryLoader.GetAvailableSeasons())
+            if (Tabs.Count == 0)
             {
-                AvailableSeasons.Add(season);
-            }
-
-            if (string.IsNullOrWhiteSpace(SelectedSeason))
-            {
-                SelectedSeason = AvailableSeasons.FirstOrDefault();
+                await AddTabAsync();
             }
         }
 
-        public async Task LoadMatchesAsync()
+        private void AddTab()
         {
-            Matches.Clear();
-
-            var summaries = await _matchSummaryLoader.LoadMatchesAsync(SelectedSeason, TeamFilter, _teamsCache);
-            foreach (var summary in summaries)
-            {
-                Matches.Add(new MatchListItemViewModel(summary));
-            }
+            _ = AddTabAsync();
         }
 
-        public void ApplyTeamFilter(string? teamName)
+        public async Task AddTabAsync()
         {
-            TeamFilter = string.IsNullOrWhiteSpace(teamName) ? null : teamName;
-            _ = LoadMatchesAsync();
+            // Create a placeholder content first so TabItemViewModel can be created
+            var placeholder = new HomePageViewModel(_matchSummaryLoader, _teamsRepository);
+            var tab = new TabItemViewModel("Home", placeholder, CloseTab);
+            Tabs.Add(tab);
+            SelectedTab = tab;
+
+            var content = new HomePageViewModel(_matchSummaryLoader, _teamsRepository,
+                async matchItem => await OpenMatchInTab(tab, matchItem));
+            tab.Content = content;
+            await content.InitializeAsync();
         }
 
-        private void ClearTeamFilter()
+        private async Task OpenMatchInTab(TabItemViewModel tab, MatchListItemViewModel matchItem)
         {
-            if (TeamFilter != null)
+            var matchVm = new MatchDetailViewModel(matchItem.FilePath, async () =>
             {
-                TeamFilter = null;
-                _ = LoadMatchesAsync();
+                var homeVm = new HomePageViewModel(_matchSummaryLoader, _teamsRepository,
+                    async item => await OpenMatchInTab(tab, item));
+                tab.Header = "Home";
+                tab.Content = homeVm;
+                await homeVm.InitializeAsync();
+            });
+
+            tab.Header = $"{matchItem.HomeTeam} vs {matchItem.AwayTeam}";
+            tab.Content = matchVm;
+            await matchVm.InitializeAsync();
+        }
+
+        private void CloseTab(TabItemViewModel tab)
+        {
+            if (Tabs.Count <= 1)
+                return;
+
+            var index = Tabs.IndexOf(tab);
+            var wasSelected = SelectedTab == tab;
+            Tabs.Remove(tab);
+
+            if (wasSelected)
+            {
+                SelectedTab = index < Tabs.Count ? Tabs[index] : Tabs[^1];
             }
         }
     }

@@ -9,6 +9,7 @@ namespace VolleyStats.ViewModels
         public MatchListItemViewModel(MatchSummary summary)
         {
             FileName = summary.FileName;
+            FilePath = summary.FilePath;
             Season = summary.Season;
             HomeTeam = summary.HomeTeam;
             AwayTeam = summary.AwayTeam;
@@ -21,6 +22,7 @@ namespace VolleyStats.ViewModels
         }
 
         public string FileName { get; }
+        public string FilePath { get; }
         public string? Season { get; }
         public string HomeTeam { get; }
         public string AwayTeam { get; }

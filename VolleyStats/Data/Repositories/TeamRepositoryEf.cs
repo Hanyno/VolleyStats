@@ -36,7 +36,7 @@ namespace VolleyStats.Data.Repositories
 
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
-                errorMessage = "Soubor neexistuje.";
+                errorMessage = "File does not exist.";
                 return false;
             }
 
@@ -301,16 +301,7 @@ namespace VolleyStats.Data.Repositories
             if (team.Id == 0)
             {
                 db.Teams.Add(team);
-                db.SaveChanges();
-
-                foreach (var player in team.Players)
-                {
-                    player.Id = 0;
-                    player.TeamId = team.Id;
-                    db.Players.Add(player);
-                }
-
-                db.SaveChanges();
+                db.SaveChanges(); // cascade inserts all players via Team.Players navigation
                 return;
             }
 
@@ -321,6 +312,7 @@ namespace VolleyStats.Data.Repositories
             if (existingTeam == null)
             {
                 // pokud záznam neexistuje, ulož ho jako nový
+
                 team.Id = 0;
                 SaveTeam(team);
                 return;

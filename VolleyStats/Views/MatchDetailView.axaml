@@ -1,0 +1,264 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewmodels="using:VolleyStats.ViewModels"
+             mc:Ignorable="d"
+             x:Class="VolleyStats.Views.MatchDetailView"
+             d:DesignWidth="1200"
+             d:DesignHeight="800"
+             x:DataType="viewmodels:MatchDetailViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Padding="24,16,24,14"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel>
+                <Button DockPanel.Dock="Left"
+                        Content="← Back"
+                        Command="{Binding BackCommand}"
+                        Padding="12,7"
+                        Margin="0,0,20,0"
+                        VerticalAlignment="Center" />
+                <Border DockPanel.Dock="Right"
+                        Background="#1D4ED8"
+                        CornerRadius="8"
+                        Padding="18,6"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ScoreText}"
+                               Foreground="White"
+                               FontSize="20"
+                               FontWeight="Bold" />
+                </Border>
+                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="16" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding HomeTeamName}"
+                               FontSize="18" FontWeight="SemiBold"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="vs" FontSize="14" VerticalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock Grid.Column="2"
+                               Text="{Binding AwayTeamName}"
+                               FontSize="18" FontWeight="SemiBold"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" />
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1" ColumnDefinitions="240,*" ColumnSpacing="0">
+
+            <!-- Left column: small court + codes list -->
+            <Grid Grid.Column="0"
+                  RowDefinitions="Auto,*"
+                  Margin="16,16,8,16">
+
+                <!-- Small volleyball court -->
+                <Border Grid.Row="0"
+                        Height="190"
+                        Background="#166534"
+                        CornerRadius="6"
+                        ClipToBounds="True">
+                    <Grid RowDefinitions="*,2,*">
+
+                        <!-- Away half -->
+                        <Grid Grid.Row="0">
+                            <Grid RowDefinitions="*,*" Margin="8,6,8,4">
+                                <!-- Away back row: 5, 6, 1 -->
+                                <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                    <Border Grid.Column="0" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos5}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="1" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos6}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="2" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos1}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                                <!-- Away front row: 4, 3, 2 -->
+                                <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                    <Border Grid.Column="0" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos4}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="1" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos3}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="2" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                        <TextBlock Text="{Binding AwayPos2}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+
+                        <!-- Net -->
+                        <Border Grid.Row="1" Background="White" Opacity="0.7" />
+
+                        <!-- Home half -->
+                        <Grid Grid.Row="2">
+                            <Grid RowDefinitions="*,*" Margin="8,4,8,6">
+                                <!-- Home front row: 4, 3, 2 -->
+                                <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                    <Border Grid.Column="0" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos4}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="1" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos3}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="2" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos2}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                                <!-- Home back row: 5, 6, 1 -->
+                                <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                    <Border Grid.Column="0" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos5}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="1" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos6}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Border Grid.Column="2" HorizontalAlignment="Center"
+                                            Width="32" Height="32" CornerRadius="16"
+                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                        <TextBlock Text="{Binding HomePos1}" Foreground="White"
+                                                   FontWeight="Bold" FontSize="13"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+
+                    </Grid>
+                </Border>
+
+                <!-- Codes list -->
+                <Border Grid.Row="1"
+                        Margin="0,8,0,0"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0"
+                                Padding="12,8"
+                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                BorderThickness="0,0,0,1">
+                            <TextBlock Text="Scout Codes"
+                                       FontWeight="SemiBold"
+                                       FontSize="13" />
+                        </Border>
+                        <ListBox Grid.Row="1"
+                                 ItemsSource="{Binding Codes}"
+                                 SelectedItem="{Binding SelectedCode, Mode=TwoWay}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="viewmodels:CodeViewModel">
+                                    <TextBlock Text="{Binding Display}"
+                                               FontFamily="Consolas,Courier New,monospace"
+                                               FontSize="12"
+                                               Padding="4,2" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+            </Grid>
+
+            <!-- Middle column: input row at top, video below -->
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,*"
+                  Margin="8,16,16,16">
+
+                <!-- Input row: HomeBtn | TextBox | AwayBtn -->
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="8">
+                    <Button Grid.Column="0"
+                            Content="{Binding HomeTeamName}"
+                            Command="{Binding AddHomePointCommand}"
+                            Background="#1D4ED8"
+                            Foreground="White"
+                            Padding="18,9"
+                            VerticalAlignment="Stretch" />
+                    <TextBox Grid.Column="1"
+                             Text="{Binding NewCodeText}"
+                             Watermark="Scout code..."
+                             VerticalAlignment="Center" />
+                    <Button Grid.Column="2"
+                            Content="{Binding AwayTeamName}"
+                            Command="{Binding AddAwayPointCommand}"
+                            Background="#166534"
+                            Foreground="White"
+                            Padding="18,9"
+                            VerticalAlignment="Stretch" />
+                </Grid>
+
+                <!-- Video area -->
+                <Border Grid.Row="1"
+                        Margin="0,8,0,0"
+                        Background="#111111"
+                        CornerRadius="6"
+                        ClipToBounds="True">
+                    <TextBlock Text="Video"
+                               Foreground="#555555"
+                               FontSize="18"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+
+            </Grid>
+
+        </Grid>
+
+    </Grid>
+</UserControl>

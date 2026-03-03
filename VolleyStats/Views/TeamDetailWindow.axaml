@@ -7,185 +7,207 @@
         mc:Ignorable="d"
         x:Class="VolleyStats.Views.TeamDetailWindow"
         x:CompileBindings="False"
-        Width="900"
-        MinWidth="900"
-        MaxWidth="900"
-        Height="600"
-        MinHeight="600"
-        MaxHeight="600"
+        Width="960"
+        MinWidth="800"
+        Height="660"
+        MinHeight="500"
         Title="Team Detail">
 
-    <DockPanel Margin="10">
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
-        <StackPanel DockPanel.Dock="Top" Margin="0,10,0,10" Spacing="6">
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Padding="28,20,28,16"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,0,1">
+            <TextBlock Text="Team Detail"
+                       FontSize="22"
+                       FontWeight="Bold" />
+        </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="20">
-        
-                <StackPanel Spacing="6"
-                            Margin="0,0,10,0">
-                    <TextBlock Text="Team code:" 
-                               VerticalAlignment="Top" 
-                               HorizontalAlignment="Left"/>
-                    <TextBox Width="60" 
-                             VerticalAlignment="Top" 
-                             HorizontalAlignment="Left"
-                             Text="{Binding TeamCode}"/>
+        <!-- Form fields -->
+        <StackPanel Grid.Row="1"
+                    Margin="28,20,28,0"
+                    Spacing="16">
+
+            <!-- Row 1: Code | Name | Abbreviation -->
+            <Grid ColumnDefinitions="90,*,130"
+                  ColumnSpacing="16">
+                <StackPanel Grid.Column="0" Spacing="5">
+                    <TextBlock Text="Code"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox Text="{Binding TeamCode}" />
                 </StackPanel>
-
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Team Name:" />
-                    <TextBox Width="350" Text="{Binding Name}"/> 
+                <StackPanel Grid.Column="1" Spacing="5">
+                    <TextBlock Text="Team Name"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox Text="{Binding Name}" />
                 </StackPanel>
-
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Coach name:" />
-                    <TextBox Width="200"
-                             Text="{Binding CoachName}"/>
-                 </StackPanel>
-
-            </StackPanel>
-            
-            <StackPanel Orientation="Horizontal" Spacing="500">
-
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Assistant coach:" />
-                    <TextBox Width="200"
-                             Text="{Binding AssistantCoachName}"/>
+                <StackPanel Grid.Column="2" Spacing="5">
+                    <TextBlock Text="Abbreviation"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox Text="{Binding Abbreviation}" />
                 </StackPanel>
+            </Grid>
 
-                <StackPanel Spacing="6">
-                    <TextBlock Text="Abbreviation Code:"/>
-                    <TextBox Width="60"
-                             Text="{Binding Abbreviation}"/>
+            <!-- Row 2: Coach | Assistant Coach -->
+            <Grid ColumnDefinitions="*,*"
+                  ColumnSpacing="16">
+                <StackPanel Grid.Column="0" Spacing="5">
+                    <TextBlock Text="Coach"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox Text="{Binding CoachName}" />
                 </StackPanel>
-
-            </StackPanel>
-
-            
+                <StackPanel Grid.Column="1" Spacing="5">
+                    <TextBlock Text="Assistant Coach"
+                               FontSize="12"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBox Text="{Binding AssistantCoachName}" />
+                </StackPanel>
+            </Grid>
 
         </StackPanel>
 
-        <!-- Tlačítka nahoře -->
-        <StackPanel DockPanel.Dock="Top"
-                    Orientation="Horizontal"
-                    Spacing="6">
-            <Button Content="Add player" Command="{Binding AddPlayerCommand}" 
-                    VerticalContentAlignment="Center"
-                    HorizontalContentAlignment="Center"
-                    />
-            <Button Content="Remove selected" Command="{Binding RemovePlayerCommand}"
-                    VerticalContentAlignment="Center"
-                    HorizontalContentAlignment="Center"
-                    />
-        </StackPanel>
+        <!-- Players section header -->
+        <Border Grid.Row="2"
+                Margin="0,20,0,0"
+                Padding="28,12,28,12"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,1,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Content="Remove Selected"
+                            Command="{Binding RemovePlayerCommand}"
+                            Padding="12,6" />
+                    <Button Content="Add Player"
+                            Command="{Binding AddPlayerCommand}"
+                            Padding="12,6" />
+                </StackPanel>
+                <TextBlock Text="Players"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
 
-        <!-- TABULKA HRÁČŮ -->
-        <StackPanel DockPanel.Dock="Top"
-                    Height="350"
-                    MaxHeight="350"
-                    MaxWidth="900">
-            <TextBlock Text="Players:" FontWeight="Bold" />
-            <DataGrid x:Name="PlayersGrid"
-                      GridLinesVisibility="All"
-                      HeadersVisibility="All"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="False"
-                      HorizontalScrollBarVisibility="Auto"
-                      MaxHeight="330"
-                      ItemsSource="{Binding Players}"
-                      SelectedItem="{Binding SelectedPlayer, Mode=TwoWay}"
-                      >
-                <DataGrid.Columns>
+        <!-- Players DataGrid -->
+        <DataGrid Grid.Row="3"
+                  x:Name="PlayersGrid"
+                  Margin="0"
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="All"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="False"
+                  HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto"
+                  ItemsSource="{Binding Players}"
+                  SelectedItem="{Binding SelectedPlayer, Mode=TwoWay}">
+            <DataGrid.Columns>
 
-                    <DataGridTextColumn Binding="{Binding JerseyNumber}"
-                                        Header="N" />
+                <DataGridTextColumn Binding="{Binding JerseyNumber}"
+                                    Header="#"
+                                    Width="44" />
 
-                    <DataGridTextColumn Binding="{Binding PlayerRole}"
-                                        Header="R"/>
+                <DataGridTextColumn Binding="{Binding PlayerRole}"
+                                    Header="Role"
+                                    Width="54" />
 
-                    <DataGridTextColumn Binding="{Binding ExternalPlayerId}"
-                                        Header="Code" />
+                <DataGridTextColumn Binding="{Binding ExternalPlayerId}"
+                                    Header="Code"
+                                    Width="70" />
 
-                    <DataGridTextColumn Binding="{Binding LastName}"
-                                        Header="Last Name" />
+                <DataGridTextColumn Binding="{Binding LastName}"
+                                    Header="Last Name"
+                                    Width="*" />
 
-                    <DataGridTextColumn Binding="{Binding FirstName}"
-                                        Header="First Name" />
+                <DataGridTextColumn Binding="{Binding FirstName}"
+                                    Header="First Name"
+                                    Width="*" />
 
-                    <DataGridTemplateColumn Header="Birth"
-                                            Width="100">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding BirthDate, StringFormat='yyyy-MM-dd'}"
-                                           TextAlignment="Center"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
+                <DataGridTemplateColumn Header="Birth Date"
+                                        Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding BirthDate, StringFormat='yyyy-MM-dd'}"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <DatePicker SelectedDate="{Binding BirthDate}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn.CellEditingTemplate>
-                            <DataTemplate>
-                                <DatePicker SelectedDate="{Binding BirthDate}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellEditingTemplate>
-                    </DataGridTemplateColumn>
+                <DataGridTextColumn Binding="{Binding HeightCm}"
+                                    Header="Height"
+                                    Width="64" />
 
-                    <DataGridTextColumn Binding="{Binding HeightCm}"
-                                        Header="Height" />
+                <DataGridTemplateColumn Header="Position"
+                                        Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Position}"
+                                       VerticalAlignment="Center"
+                                       Margin="12,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                            <ComboBox ItemsSource="{x:Static enums:EnumSources.PlayerPosts}"
+                                      SelectedItem="{Binding Position}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="Position">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Position}" 
-                                           TextAlignment="Center"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
+                <DataGridTextColumn Binding="{Binding NickName}"
+                                    Header="Nickname"
+                                    Width="100" />
 
-                        <DataGridTemplateColumn.CellEditingTemplate>
-                            <DataTemplate>
-                                <ComboBox ItemsSource="{x:Static enums:EnumSources.PlayerPosts}"
-                                    SelectedItem="{Binding Position}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellEditingTemplate>
-                    </DataGridTemplateColumn>
+                <DataGridCheckBoxColumn Binding="{Binding IsForeign}"
+                                        Header="Foreign"
+                                        Width="64" />
 
-                    <DataGridTextColumn Binding="{Binding NickName}"
-                                        Header="Nickname" />
+                <DataGridCheckBoxColumn Binding="{Binding TransferredOut}"
+                                        Header="Out"
+                                        Width="48" />
 
-                    <DataGridCheckBoxColumn Binding="{Binding IsForeign}"
-                                            Header="For." />
+            </DataGrid.Columns>
+        </DataGrid>
 
-                    <DataGridCheckBoxColumn Binding="{Binding TransferredOut}"
-                                            Header="Out" />
+        <!-- Footer -->
+        <Border Grid.Row="4"
+                Padding="28,12"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,1,0,0">
+            <DockPanel>
+                <Button DockPanel.Dock="Left"
+                        Content="Delete Team"
+                        Command="{Binding DeleteCommand}"
+                        Background="#DC2626"
+                        Foreground="White"
+                        Padding="14,8" />
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            HorizontalAlignment="Right">
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            Padding="14,8" />
+                    <Button Content="Save"
+                            Command="{Binding SaveCommand}"
+                            Padding="14,8" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
 
-                </DataGrid.Columns>
-            </DataGrid>
-        </StackPanel>
-
-        <!-- Tlačítka dole -->
-        <StackPanel DockPanel.Dock="Left"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Left"
-                    Margin="0,10,0,0"
-                    Spacing="6">
-            <Button Content="Delete" Width="100" Command="{Binding DeleteCommand}"
-                        HorizontalAlignment="Left"
-                        VerticalContentAlignment="Center"
-                        HorizontalContentAlignment="Center"
-                        Background="Red"/>
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Margin="0,10,0,0"
-                    Spacing="6">
-            
-            <Button Content="Cancel" Width="100" Command="{Binding CancelCommand}"
-                    VerticalContentAlignment="Center"
-                    HorizontalContentAlignment="Center"
-                    />
-            <Button Content="Save" Width="100" Command="{Binding SaveCommand}" 
-                    VerticalContentAlignment="Center"
-                    HorizontalContentAlignment="Center"
-                    />
-        </StackPanel>
-    </DockPanel>
+    </Grid>
 </Window>

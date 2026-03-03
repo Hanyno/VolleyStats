@@ -14,7 +14,7 @@ namespace VolleyStats.Domain
         public string ExternalPlayerId { get; set; } = string.Empty;
         public string? LastName { get; set; } = string.Empty;
         public string? FirstName { get; set; } = string.Empty;
-        public DateTimeOffset? BirthDate { get; set; }
+        public DateOnly? BirthDate { get; set; }
         public int? HeightCm { get; set; }
         public PlayerPost Position { get; set; }
         public string? PlayerRole { get; set; } = string.Empty;

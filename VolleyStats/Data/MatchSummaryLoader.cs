@@ -82,6 +82,7 @@ namespace VolleyStats.Data
                     League = "Extraliga",
                     Phase = "Základní část",
                     Date = new DateOnly(2024, 10, 5),
+
                     Time = new TimeOnly(18, 0),
                     HomeTeam = "VK Dukla Liberec",
                     HomeSets = 3,
@@ -161,33 +162,9 @@ namespace VolleyStats.Data
 
         private static MatchSummary ParseFile(string filePath, IReadOnlyCollection<Team>? knownTeams)
         {
-            var summary = new MatchSummary
-            {
-                FileName = Path.GetFileNameWithoutExtension(filePath)
-            };
-
-            string[] lines;
-            try
-            {
-                lines = File.ReadAllLines(filePath, Encoding.UTF8);
-                if (lines.Length == 0)
-                    lines = File.ReadAllLines(filePath, Encoding.Default);
-            }
-            catch
-            {
-                lines = Array.Empty<string>();
-            }
-
-            TryParseHeader(lines, summary);
-            TryParseTeams(lines, summary, knownTeams);
-            TryParseSets(lines, summary);
-
-            if (!summary.Date.HasValue)
-            {
-                var created = File.GetCreationTime(filePath);
-                summary.Date = DateOnly.FromDateTime(created);
-                summary.Time ??= TimeOnly.FromDateTime(created);
-            }
+            var parser = new DvwFileParser();
+            var summary = parser.ParseMatchSummary(filePath);
+            summary.FilePath = filePath;
 
             if (string.IsNullOrWhiteSpace(summary.HomeTeam) && string.IsNullOrWhiteSpace(summary.AwayTeam))
             {

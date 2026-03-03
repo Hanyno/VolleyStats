@@ -65,7 +65,7 @@
 
         </StackPanel>
 
-        <!-- Tlaèítka nahoøe -->
+        <!-- TlaÄÃ­tka nahoÅ™e -->
         <StackPanel DockPanel.Dock="Top"
                     Orientation="Horizontal"
                     Spacing="6">
@@ -79,7 +79,7 @@
                     />
         </StackPanel>
 
-        <!-- TABULKA HRÁÈÙ -->
+        <!-- TABULKA HRÃÄŒÅ® -->
         <StackPanel DockPanel.Dock="Top"
                     Height="350"
                     MaxHeight="350"
@@ -160,7 +160,7 @@
             </DataGrid>
         </StackPanel>
 
-        <!-- Tlaèítka dole -->
+        <!-- TlaÄÃ­tka dole -->
         <StackPanel DockPanel.Dock="Left"
                     Orientation="Horizontal"
                     HorizontalAlignment="Left"

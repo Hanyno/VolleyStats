@@ -9,10 +9,13 @@ namespace VolleyStats.Domain
     {
         public string Combination { get; set; }
         public int StartPoint { get; set; }
-        public char Player { get; set; }
         // TODO: EnuM??
+        public char Dir { get; set; }
         public char Type { get; set; }
         public string Desc { get; set; }
-
+        public string IdkRandom { get; set; }           // TODO
+        public string Color { get; set; }
+        public char SetterCall { get; set; }
+        public bool IdkRandom2 { get; set; }            // TODO 
     }
 }

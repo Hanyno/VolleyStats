@@ -4,6 +4,8 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using VolleyStats.Data;
+using VolleyStats.Data.Repositories;
 using VolleyStats.ViewModels;
 using VolleyStats.Views;
 
@@ -11,6 +13,7 @@ namespace VolleyStats
 {
     public partial class App : Application
     {
+
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -23,10 +26,8 @@ namespace VolleyStats
                 // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
                 // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
                 DisableAvaloniaDataAnnotationValidation();
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = new MainWindowViewModel(),
-                };
+                
+                desktop.MainWindow = new MainWindow();
             }
 
             base.OnFrameworkInitializationCompleted();

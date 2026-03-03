@@ -11,7 +11,7 @@ namespace VolleyStats.Domain
     {
         public int Id { get; set; }                                     // Database primary key
 
-        public int TeamId { get; set; }                                 // Foreign key to the Team entity
+        public string TeamCode { get; set; } = string.Empty;           // Foreign key to the Team entity
         public int JerseyNumber { get; set; }
         public string ExternalPlayerId { get; set; } = string.Empty;    // Player ID from the original data, using by data volley (can be same in different teams, not in same team)
         public string? LastName { get; set; } = string.Empty;

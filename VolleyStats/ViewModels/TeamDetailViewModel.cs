@@ -10,8 +10,6 @@ namespace VolleyStats.ViewModels
     {
         public event EventHandler<TeamDialogResult>? CloseRequested;
 
-        private readonly int _teamId;
-
         private string _teamCode = string.Empty;
         public string TeamCode
         {
@@ -76,7 +74,6 @@ namespace VolleyStats.ViewModels
 
         public TeamDetailViewModel(Team team)
         {
-            _teamId = team.Id;
             _teamCode = team.TeamCode;
             _name = team.Name;
             _coachName = team.CoachName;
@@ -97,7 +94,7 @@ namespace VolleyStats.ViewModels
         {
             Players.Add(new Player
             {
-                TeamId = _teamId,
+                TeamCode = _teamCode,
                 JerseyNumber = 0,
                 LastName = string.Empty,
                 FirstName = string.Empty
@@ -151,7 +148,6 @@ namespace VolleyStats.ViewModels
         {
             var team = new Team
             {
-                Id = _teamId,
                 TeamCode = TeamCode ?? string.Empty,
                 Name = Name ?? string.Empty,
                 CoachName = CoachName,
@@ -168,7 +164,7 @@ namespace VolleyStats.ViewModels
             return new Player
             {
                 Id = p.Id,
-                TeamId = p.TeamId,
+                TeamCode = p.TeamCode,
                 JerseyNumber = p.JerseyNumber,
                 ExternalPlayerId = p.ExternalPlayerId,
                 LastName = p.LastName,

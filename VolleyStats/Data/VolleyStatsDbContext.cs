@@ -51,7 +51,7 @@ namespace VolleyStats.Data
             modelBuilder.Entity<Team>(e =>
             {
                 e.ToTable("Teams");
-                e.HasKey(t => t.Id);
+                e.HasKey(t => t.TeamCode);
 
                 e.Property(t => t.TeamCode).IsRequired();
                 e.Property(t => t.Name).IsRequired();
@@ -61,10 +61,9 @@ namespace VolleyStats.Data
                 e.Property(t => t.Abbreviation);
                 e.Property(t => t.CharacterEncoding);
 
-
                 e.HasMany(t => t.Players)
                  .WithOne(p => p.Team)
-                 .HasForeignKey(p => p.TeamId)
+                 .HasForeignKey(p => p.TeamCode)
                  .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -74,7 +73,7 @@ namespace VolleyStats.Data
                 e.ToTable("Players");
                 e.HasKey(p => p.Id);
 
-                e.Property(p => p.TeamId).IsRequired();
+                e.Property(p => p.TeamCode).IsRequired();
                 e.Property(p => p.JerseyNumber).IsRequired();
 
                 e.Property(p => p.ExternalPlayerId);
@@ -99,7 +98,7 @@ namespace VolleyStats.Data
 
                 e.Property(p => p.BirthDateSerial);
 
-                e.HasIndex(p => p.TeamId).HasDatabaseName("IX_Players_TeamId");
+                e.HasIndex(p => p.TeamCode).HasDatabaseName("IX_Players_TeamCode");
             });
         }
     }

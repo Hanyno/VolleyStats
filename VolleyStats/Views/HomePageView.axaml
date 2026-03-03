@@ -13,164 +13,189 @@
 
         <!-- Toolbar -->
         <Border Grid.Row="0"
-                Padding="28,18,28,16"
+                Padding="20,14,20,14"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
 
-                <!-- Manage Teams button — right side -->
+                <!-- Settings button — left -->
+                <Button DockPanel.Dock="Left"
+                        Content="⚙"
+                        Padding="14,10"
+                        Margin="0,0,12,0"
+                        FontSize="22"
+                        VerticalAlignment="Center"
+                        ToolTip.Tip="Settings" />
+
+                <!-- Manage Teams button — right -->
                 <Button DockPanel.Dock="Right"
                         Content="Manage Teams"
                         Click="TeamsButton_OnClick"
                         Padding="14,8"
-                        VerticalAlignment="Bottom" />
+                        VerticalAlignment="Center" />
 
-                <!-- Title + filters -->
-                <StackPanel Spacing="14">
-                    <TextBlock Text="Matches"
-                               FontSize="26"
-                               FontWeight="Bold" />
-
-                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-
-                        <!-- Season label + picker -->
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="Season"
-                                       VerticalAlignment="Center"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                       FontSize="13" />
-                            <ComboBox Width="200"
-                                      ItemsSource="{Binding AvailableSeasons}"
-                                      SelectedItem="{Binding SelectedSeason, Mode=TwoWay}" />
-                        </StackPanel>
-
-                        <!-- Separator -->
-                        <Border Width="1" Height="22"
-                                Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                                Margin="2,0" />
-
-                        <!-- Team filter -->
-                        <Button Content="{Binding TeamFilterButtonText}"
-                                Click="SelectTeamButton_OnClick"
-                                Padding="12,6" />
-
-                        <!-- Clear filter -->
-                        <Button Content="Clear Filter"
-                                IsEnabled="{Binding HasTeamFilter}"
-                                Click="ClearTeamFilterButton_OnClick"
-                                Padding="12,6" />
-
-                        <!-- Refresh -->
-                        <Button Content="↻ Refresh"
-                                Command="{Binding LoadMatchesCommand}"
-                                Padding="12,6" />
-                    </StackPanel>
-                </StackPanel>
+                <!-- App title -->
+                <TextBlock Text=""
+                           FontSize="22"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center" />
             </DockPanel>
         </Border>
 
-        <!-- Match list -->
-        <ListBox Grid.Row="1"
-                 x:Name="MatchesList"
-                 ItemsSource="{Binding Matches}"
-                 Background="Transparent"
-                 BorderThickness="0"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                 Margin="28,16,28,24">
-            <ListBox.Styles>
-                <Style Selector="ListBoxItem">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <Setter Property="Padding" Value="0" />
-                    <Setter Property="Margin" Value="0,0,0,8" />
-                    <Setter Property="Background" Value="Transparent" />
-                    <Setter Property="BorderThickness" Value="0" />
-                    <Setter Property="CornerRadius" Value="10" />
-                </Style>
-                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
-                    <Setter Property="Background" Value="Transparent" />
-                </Style>
-            </ListBox.Styles>
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="viewmodels:MatchListItemViewModel">
-                    <Border Padding="20,14"
-                            CornerRadius="10"
+        <!-- Content: centered card with filters + match list -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Border MaxWidth="900"
+                    HorizontalAlignment="Center"
+                    Margin="24,28,24,28"
+                    CornerRadius="12"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                <StackPanel>
+
+                    <!-- Filters bar inside the card -->
+                    <Border Padding="20,16"
                             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                            BorderThickness="1"
-                            Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
-                        <Interaction.Behaviors>
-                            <EventTriggerBehavior EventName="DoubleTapped">
-                                <InvokeCommandAction
-                                    Command="{Binding $parent[ListBox].DataContext.OpenMatchCommand}"
-                                    CommandParameter="{Binding}" />
-                            </EventTriggerBehavior>
-                        </Interaction.Behaviors>
-                        <Grid ColumnDefinitions="96,*" ColumnSpacing="20">
-
-                            <!-- Date & Time -->
-                            <StackPanel Grid.Column="0"
-                                        Spacing="3"
-                                        VerticalAlignment="Center">
-                                <TextBlock Text="{Binding DateText}"
-                                           FontWeight="SemiBold"
-                                           FontSize="14" />
-                                <TextBlock Text="{Binding TimeText}"
-                                           FontSize="12"
-                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                            BorderThickness="0,0,0,1">
+                        <WrapPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <TextBlock Text="Season"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                           FontSize="13" />
+                                <ComboBox Width="200"
+                                          ItemsSource="{Binding AvailableSeasons}"
+                                          SelectedItem="{Binding SelectedSeason, Mode=TwoWay}" />
                             </StackPanel>
 
-                            <!-- Match: teams, score, league -->
-                            <StackPanel Grid.Column="1" Spacing="6">
+                            <Border Width="1" Height="22"
+                                    Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    Margin="2,0,12,0"
+                                    VerticalAlignment="Center" />
 
-                                <!-- Score row -->
-                                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="16">
-                                    <TextBlock Grid.Column="0"
-                                               Text="{Binding HomeTeam}"
-                                               FontWeight="SemiBold"
-                                               FontSize="15"
-                                               HorizontalAlignment="Right"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap" />
+                            <Button Content="{Binding TeamFilterButtonText}"
+                                    Click="SelectTeamButton_OnClick"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0" />
 
-                                    <Border Grid.Column="1"
-                                            Background="#1D4ED8"
-                                            CornerRadius="6"
-                                            Padding="14,4"
-                                            VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding ScoreText}"
-                                                   FontSize="16"
-                                                   FontWeight="Bold"
-                                                   Foreground="White"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center" />
-                                    </Border>
+                            <Button Content="Clear Filter"
+                                    IsEnabled="{Binding HasTeamFilter}"
+                                    Click="ClearTeamFilterButton_OnClick"
+                                    Padding="12,6"
+                                    Margin="0,0,6,0" />
 
-                                    <TextBlock Grid.Column="2"
-                                               Text="{Binding AwayTeam}"
-                                               FontWeight="SemiBold"
-                                               FontSize="15"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap" />
-                                </Grid>
-
-                                <!-- League & Phase -->
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="{Binding LeagueText}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                    <TextBlock Text="·"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                    <TextBlock Text="{Binding PhaseText}"
-                                               FontSize="12"
-                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Grid>
+                            <Button Content="↻ Refresh"
+                                    Command="{Binding LoadMatchesCommand}"
+                                    Padding="12,6" />
+                        </WrapPanel>
                     </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+
+                    <!-- Match list -->
+                    <ListBox x:Name="MatchesList"
+                             ItemsSource="{Binding Matches}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             Margin="16,12,16,16">
+                        <ListBox.Styles>
+                            <Style Selector="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0,0,0,8" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="CornerRadius" Value="10" />
+                            </Style>
+                            <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="Transparent" />
+                            </Style>
+                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:MatchListItemViewModel">
+                                <Border Padding="20,14"
+                                        CornerRadius="10"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                        BorderThickness="1"
+                                        Background="{DynamicResource SystemControlPageBackgroundAltHighBrush}">
+                                    <Interaction.Behaviors>
+                                        <EventTriggerBehavior EventName="DoubleTapped">
+                                            <InvokeCommandAction
+                                                Command="{Binding $parent[ListBox].DataContext.OpenMatchCommand}"
+                                                CommandParameter="{Binding}" />
+                                        </EventTriggerBehavior>
+                                    </Interaction.Behaviors>
+                                    <Grid ColumnDefinitions="96,*" ColumnSpacing="20">
+
+                                        <!-- Date & Time -->
+                                        <StackPanel Grid.Column="0"
+                                                    Spacing="3"
+                                                    VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DateText}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="14" />
+                                            <TextBlock Text="{Binding TimeText}"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                        </StackPanel>
+
+                                        <!-- Match: teams, score, league -->
+                                        <StackPanel Grid.Column="1" Spacing="6">
+
+                                            <!-- Score row -->
+                                            <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="16">
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding HomeTeam}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="15"
+                                                           HorizontalAlignment="Right"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="Wrap" />
+
+                                                <Border Grid.Column="1"
+                                                        Background="#1D4ED8"
+                                                        CornerRadius="6"
+                                                        Padding="14,4"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ScoreText}"
+                                                               FontSize="16"
+                                                               FontWeight="Bold"
+                                                               Foreground="White"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding AwayTeam}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="15"
+                                                           HorizontalAlignment="Left"
+                                                           VerticalAlignment="Center"
+                                                           TextWrapping="Wrap" />
+                                            </Grid>
+
+                                            <!-- League & Phase -->
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock Text="{Binding LeagueText}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                <TextBlock Text="·"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                <TextBlock Text="{Binding PhaseText}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
     </Grid>
 </UserControl>

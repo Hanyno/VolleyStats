@@ -46,18 +46,6 @@ namespace VolleyStats.Data.Repositories
                 return false;
             }
 
-            using var db = CreateDb();
-            db.Database.EnsureCreated();
-
-            var existing = db.Teams
-                .Include(t => t.Players)
-                .FirstOrDefault(t => t.TeamCode == team.TeamCode);
-
-            if (existing != null)
-            {
-                team.Id = existing.Id;
-            }
-
             SaveTeam(team);
             return true;
         }
@@ -298,75 +286,36 @@ namespace VolleyStats.Data.Repositories
 
             team.Players ??= new List<Player>();
 
-            if (team.Id == 0)
-            {
-                db.Teams.Add(team);
-                db.SaveChanges(); // cascade inserts all players via Team.Players navigation
-                return;
-            }
-
             var existingTeam = db.Teams
                 .Include(t => t.Players)
-                .FirstOrDefault(t => t.Id == team.Id);
+                .FirstOrDefault(t => t.TeamCode == team.TeamCode);
 
             if (existingTeam == null)
             {
-                // pokud záznam neexistuje, ulož ho jako nový
-
-                team.Id = 0;
-                SaveTeam(team);
+                foreach (var player in team.Players)
+                {
+                    player.Id = 0;
+                    player.TeamCode = team.TeamCode;
+                }
+                db.Teams.Add(team);
+                db.SaveChanges();
                 return;
             }
 
-            existingTeam.TeamCode = team.TeamCode;
             existingTeam.Name = team.Name;
             existingTeam.CoachName = team.CoachName;
             existingTeam.AssistantCoachName = team.AssistantCoachName;
             existingTeam.Abbreviation = team.Abbreviation;
             existingTeam.CharacterEncoding = team.CharacterEncoding;
 
-            var incomingPlayers = team.Players;
-            var incomingById = incomingPlayers
-                .Where(p => p.Id != 0)
-                .ToDictionary(p => p.Id);
+            // Delete all existing players and re-insert to avoid duplicates
+            db.Players.RemoveRange(existingTeam.Players);
 
-            var toRemove = existingTeam.Players
-                .Where(p => !incomingById.ContainsKey(p.Id))
-                .ToList();
-
-            foreach (var remove in toRemove)
+            foreach (var player in team.Players)
             {
-                db.Players.Remove(remove);
-            }
-
-            foreach (var existingPlayer in existingTeam.Players)
-            {
-                if (incomingById.TryGetValue(existingPlayer.Id, out var updated))
-                {
-                    existingPlayer.TeamId = existingTeam.Id;
-                    existingPlayer.JerseyNumber = updated.JerseyNumber;
-                    existingPlayer.PlayerRole = updated.PlayerRole;
-                    existingPlayer.ExternalPlayerId = updated.ExternalPlayerId;
-                    existingPlayer.LastName = updated.LastName;
-                    existingPlayer.FirstName = updated.FirstName;
-                    existingPlayer.BirthDate = updated.BirthDate;
-                    existingPlayer.HeightCm = updated.HeightCm;
-                    existingPlayer.Position = updated.Position;
-                    existingPlayer.NickName = updated.NickName;
-                    existingPlayer.IsForeign = updated.IsForeign;
-                    existingPlayer.TransferredOut = updated.TransferredOut;
-                    existingPlayer.BirthDateSerial = updated.BirthDateSerial;
-                }
-            }
-
-            var newPlayers = incomingPlayers
-                .Where(p => p.Id == 0 || !existingTeam.Players.Any(ep => ep.Id == p.Id))
-                .ToList();
-            foreach (var newPlayer in newPlayers)
-            {
-                newPlayer.Id = 0;
-                newPlayer.TeamId = existingTeam.Id;
-                db.Players.Add(newPlayer);
+                player.Id = 0;
+                player.TeamCode = existingTeam.TeamCode;
+                db.Players.Add(player);
             }
 
             db.SaveChanges();
@@ -382,11 +331,11 @@ namespace VolleyStats.Data.Repositories
                 .ToList();
         }
 
-        public void DeleteTeam(int teamId)
+        public void DeleteTeam(string teamCode)
         {
             using var db = CreateDb();
 
-            var team = db.Teams.FirstOrDefault(t => t.Id == teamId);
+            var team = db.Teams.FirstOrDefault(t => t.TeamCode == teamCode);
             if (team == null) return;
 
             db.Teams.Remove(team);

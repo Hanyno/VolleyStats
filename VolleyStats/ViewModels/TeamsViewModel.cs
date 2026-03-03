@@ -113,7 +113,7 @@ namespace VolleyStats.ViewModels
             }
             else if (result.Result == TeamDialogResultType.Delete && result.Team != null)
             {
-                _repository.DeleteTeam(result.Team.Id);
+                _repository.DeleteTeam(result.Team.TeamCode);
                 await LoadTeamsAsync();
             }
         }
@@ -123,7 +123,7 @@ namespace VolleyStats.ViewModels
             if (SelectedTeam == null)
                 return;
 
-            _repository.DeleteTeam(SelectedTeam.Id);
+            _repository.DeleteTeam(SelectedTeam.TeamCode);
             await LoadTeamsAsync();
         }
 
@@ -131,7 +131,6 @@ namespace VolleyStats.ViewModels
         {
             var clone = new Team
             {
-                Id = team.Id,
                 TeamCode = team.TeamCode,
                 Name = team.Name,
                 CoachName = team.CoachName,
@@ -145,7 +144,7 @@ namespace VolleyStats.ViewModels
                 clone.Players = team.Players.Select(p => new Player
                 {
                     Id = p.Id,
-                    TeamId = p.TeamId,
+                    TeamCode = p.TeamCode,
                     JerseyNumber = p.JerseyNumber,
                     ExternalPlayerId = p.ExternalPlayerId,
                     LastName = p.LastName,

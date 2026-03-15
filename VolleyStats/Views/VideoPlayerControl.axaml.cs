@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -16,16 +18,36 @@ namespace VolleyStats.Views
     public partial class VideoPlayerControl : UserControl
     {
         private MediaPlayer? _player;
+        private volatile bool _detached;
 
         private const uint W = 1280, H = 720;
         private const int FrameBytes = (int)(W * H * 4);
         private readonly byte[] _buf = new byte[FrameBytes];
         private GCHandle _bufHandle;
+
+        // Dummy buffer that stays pinned forever — Lock callbacks always have a safe target
+        private static readonly byte[] DummyBuf = new byte[FrameBytes];
+        private static readonly GCHandle DummyHandle = GCHandle.Alloc(DummyBuf, GCHandleType.Pinned);
         private WriteableBitmap? _bitmap;
         private int _uiReady = 1;
 
         private string? _pendingPath;
         private int? _pendingSeek;
+        private volatile bool _pauseAfterSeek;
+        private volatile int _skipFrames;
+
+        // ── Player pool ─────────────────────────────────────────────────────
+        private class PooledPlayer
+        {
+            public MediaPlayer Player = null!;
+            public byte[] Buffer = null!;
+            public GCHandle Handle;
+            public bool Ready;
+        }
+
+        private Dictionary<string, PooledPlayer>? _pool;
+        private PooledPlayer? _activePooled;
+        private string? _activePooledPath;
 
         // Drawing state
         private bool _isPaintMode;
@@ -38,6 +60,15 @@ namespace VolleyStats.Views
         {
             get => GetValue(VideoPathProperty);
             set => SetValue(VideoPathProperty, value);
+        }
+
+        public static readonly StyledProperty<bool> PauseOnLoadProperty =
+            AvaloniaProperty.Register<VideoPlayerControl, bool>(nameof(PauseOnLoad), defaultValue: true);
+
+        public bool PauseOnLoad
+        {
+            get => GetValue(PauseOnLoadProperty);
+            set => SetValue(PauseOnLoadProperty, value);
         }
 
         public static readonly StyledProperty<int?> VideoSeekSecondsProperty =
@@ -60,55 +91,323 @@ namespace VolleyStats.Views
 
         private async void OnAttached(object? sender, VisualTreeAttachmentEventArgs e)
         {
+            _detached = false;
             _bufHandle = GCHandle.Alloc(_buf, GCHandleType.Pinned);
 
-            await Program.LibVlcInitTask;
+            try
+            {
+                var completed = await Task.WhenAny(
+                    Program.LibVlcInitTask,
+                    Task.Delay(10_000));
+
+                if (completed != Program.LibVlcInitTask)
+                {
+                    ShowStatus("Video engine timed out");
+                    return;
+                }
+            }
+            catch
+            {
+                ShowStatus("Video engine error");
+                return;
+            }
+
+            if (_detached) return;
 
             var vlc = Program.LibVlc;
             if (vlc == null)
             {
-                Console.WriteLine("[VIDEO] LibVLC init failed — cannot play video");
                 ShowStatus("Video engine unavailable");
                 return;
             }
 
-            _player = new MediaPlayer(vlc);
-            _bitmap = new WriteableBitmap(
-                new PixelSize((int)W, (int)H), new Vector(96, 96),
-                PixelFormats.Bgra8888, AlphaFormat.Opaque);
-
-            VideoImage.Source = _bitmap;
-            _player.SetVideoCallbacks(Lock, null, Display);
-            _player.SetVideoFormat("RV32", W, H, W * 4);
-
-            _player.Playing += (_, _) =>
+            try
             {
-                if (_pendingSeek.HasValue)
-                {
-                    _player.Time = (long)_pendingSeek.Value * 1000;
-                    _pendingSeek = null;
-                }
-                Dispatcher.UIThread.Post(() =>
-                {
-                    HideStatus();
-                    PlayPauseBtn.Content = "⏸";
-                });
-            };
-            _player.Paused += (_, _) => Dispatcher.UIThread.Post(() => PlayPauseBtn.Content = "▶");
-            _player.Stopped += (_, _) => Dispatcher.UIThread.Post(() => PlayPauseBtn.Content = "▶");
+                _bitmap = new WriteableBitmap(
+                    new PixelSize((int)W, (int)H), new Vector(96, 96),
+                    PixelFormats.Bgra8888, AlphaFormat.Opaque);
+                VideoImage.Source = _bitmap;
+
+                _player = CreatePlayer(vlc, _buf, _bufHandle);
+            }
+            catch
+            {
+                ShowStatus("Video player error");
+                return;
+            }
 
             var path = _pendingPath ?? VideoPath;
-            Console.WriteLine($"[VIDEO] OnAttached complete — loading path: '{path}'");
+            _pendingPath = null;
             if (path != null)
                 Load(path);
         }
 
+        private MediaPlayer CreatePlayer(LibVLC vlc, byte[] buf, GCHandle handle)
+        {
+            var player = new MediaPlayer(vlc);
+            player.SetVideoCallbacks(
+                (opaque, planes) =>
+                {
+                    // Always write a valid pointer — VLC will crash if planes is left empty
+                    if (_detached)
+                        Marshal.WriteIntPtr(planes, DummyHandle.AddrOfPinnedObject());
+                    else
+                        Marshal.WriteIntPtr(planes, handle.AddrOfPinnedObject());
+                    return IntPtr.Zero;
+                },
+                null,
+                (opaque, picture) => Display(opaque, picture));
+            player.SetVideoFormat("RV32", W, H, W * 4);
+
+            player.Playing += (_, _) =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_detached) return;
+                    HideStatus();
+                    PlayPauseBtn.Content = "\u23f8";
+                });
+                if (_pendingSeek.HasValue)
+                {
+                    var shouldPause = _pauseAfterSeek;
+                    _pauseAfterSeek = false;
+                    var p = player;
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(300);
+                        if (p == null || _detached) return;
+                        var seek = _pendingSeek;
+                        if (!seek.HasValue) return;
+                        _pendingSeek = null;
+                        var seekMs = (long)seek.Value * 1000;
+                        try
+                        {
+                            var length = p.Length;
+                            if (length > 0 && seekMs >= length)
+                                seekMs = Math.Max(0, length - 2000);
+                            p.Time = seekMs;
+                            _skipFrames = 3;
+                            if (shouldPause)
+                            {
+                                await Task.Delay(100);
+                                if (!_detached) p.Pause();
+                            }
+                        }
+                        catch { _skipFrames = 0; }
+                    });
+                }
+                else if (_pauseAfterSeek)
+                {
+                    _pauseAfterSeek = false;
+                    var p = player;
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(300);
+                        if (p == null || _detached) return;
+                        try { p.Pause(); } catch { }
+                    });
+                }
+            };
+            player.Paused += (_, _) =>
+                Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+            player.Stopped += (_, _) =>
+                Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+            player.EncounteredError += (_, _) =>
+                ShowStatus("Video playback error");
+
+            return player;
+        }
+
+        private PooledPlayer CreatePooledPlayer(LibVLC vlc, string path)
+        {
+            var pooled = new PooledPlayer
+            {
+                Buffer = new byte[FrameBytes]
+            };
+            pooled.Handle = GCHandle.Alloc(pooled.Buffer, GCHandleType.Pinned);
+
+            var player = new MediaPlayer(vlc);
+            player.SetVideoCallbacks(
+                (opaque, planes) =>
+                {
+                    // Always write a valid pointer — VLC will crash if planes is left empty
+                    if (_detached)
+                    {
+                        Marshal.WriteIntPtr(planes, DummyHandle.AddrOfPinnedObject());
+                    }
+                    else if (_activePooled == pooled)
+                    {
+                        Marshal.WriteIntPtr(planes, _bufHandle.AddrOfPinnedObject());
+                    }
+                    else
+                    {
+                        // Write to pooled player's own buffer if handle is still valid
+                        var h = pooled.Handle;
+                        if (h.IsAllocated)
+                            Marshal.WriteIntPtr(planes, h.AddrOfPinnedObject());
+                        else
+                            Marshal.WriteIntPtr(planes, DummyHandle.AddrOfPinnedObject());
+                    }
+                    return IntPtr.Zero;
+                },
+                null,
+                (opaque, picture) =>
+                {
+                    // Only render if this is the active pooled player
+                    if (_activePooled == pooled)
+                        Display(opaque, picture);
+                });
+            player.SetVideoFormat("RV32", W, H, W * 4);
+
+            player.Playing += (_, _) =>
+            {
+                if (_activePooled == pooled)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (_detached) return;
+                        HideStatus();
+                        PlayPauseBtn.Content = "\u23f8";
+                    });
+                }
+
+                if (_activePooled == pooled && _pendingSeek.HasValue)
+                {
+                    var shouldPause = _pauseAfterSeek;
+                    _pauseAfterSeek = false;
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(300);
+                        if (_detached) return;
+                        var seek = _pendingSeek;
+                        if (!seek.HasValue) return;
+                        _pendingSeek = null;
+                        var seekMs = (long)seek.Value * 1000;
+                        try
+                        {
+                            var length = player.Length;
+                            if (length > 0 && seekMs >= length)
+                                seekMs = Math.Max(0, length - 2000);
+                            player.Time = seekMs;
+                            _skipFrames = 3;
+                            if (shouldPause)
+                            {
+                                await Task.Delay(100);
+                                if (!_detached) player.Pause();
+                            }
+                        }
+                        catch { _skipFrames = 0; }
+                    });
+                }
+                else if (!pooled.Ready)
+                {
+                    // Initial preload: pause immediately
+                    pooled.Ready = true;
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(300);
+                        if (_detached) return;
+                        try { player.Pause(); } catch { }
+                    });
+                }
+            };
+            player.Paused += (_, _) =>
+            {
+                if (_activePooled == pooled)
+                    Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+            };
+
+            pooled.Player = player;
+
+            using var media = new Media(vlc, path, FromType.FromPath);
+            player.Play(media);
+
+            return pooled;
+        }
+
+        public void PausePlayback()
+        {
+            try { _player?.Pause(); } catch { }
+        }
+
+        public void PreloadVideos(IReadOnlyList<string> paths)
+        {
+            if (_detached || Program.LibVlc == null) return;
+
+            _pool = new Dictionary<string, PooledPlayer>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var path in paths)
+            {
+                if (string.IsNullOrEmpty(path) || _pool.ContainsKey(path)) continue;
+                if (!System.IO.File.Exists(path)) continue;
+
+                try
+                {
+                    var pooled = CreatePooledPlayer(Program.LibVlc, path);
+                    _pool[path] = pooled;
+                }
+                catch { }
+            }
+        }
+
         private void OnDetached(object? sender, VisualTreeAttachmentEventArgs e)
         {
-            _player?.Stop();
-            _player?.Dispose();
+            _detached = true;
+            var player = _player;
             _player = null;
-            if (_bufHandle.IsAllocated) _bufHandle.Free();
+            _bitmap = null;
+            var pool = _pool;
+            _pool = null;
+            _activePooled = null;
+            _activePooledPath = null;
+            var handle = _bufHandle;
+
+            // Collect all players to stop (avoid stopping the same player twice)
+            var playersToDispose = new HashSet<MediaPlayer>();
+            if (pool != null)
+            {
+                foreach (var kv in pool)
+                    playersToDispose.Add(kv.Value.Player);
+            }
+            // Only add standalone player if it's not already in the pool
+            if (player != null && !playersToDispose.Contains(player))
+                playersToDispose.Add(player);
+
+            var poolEntries = pool;
+
+            Task.Run(async () =>
+            {
+                // Stop all players first
+                foreach (var p in playersToDispose)
+                {
+                    try { p.Stop(); } catch { }
+                    await Task.Delay(50);
+                }
+
+                // Wait for VLC callbacks to drain — they write to DummyBuf now,
+                // so our real buffers are safe, but we still need players fully stopped
+                await Task.Delay(500);
+
+                // Dispose players (releases VLC resources)
+                foreach (var p in playersToDispose)
+                {
+                    try { p.Dispose(); } catch { }
+                }
+
+                // Another delay to ensure all native callbacks are truly done
+                await Task.Delay(200);
+
+                // Now safe to free pinned buffers
+                if (poolEntries != null)
+                {
+                    foreach (var kv in poolEntries)
+                    {
+                        try { if (kv.Value.Handle.IsAllocated) kv.Value.Handle.Free(); } catch { }
+                    }
+                }
+
+                try { if (handle.IsAllocated) handle.Free(); } catch { }
+            });
         }
 
         // ── Property changes ─────────────────────────────────────────────────
@@ -120,7 +419,6 @@ namespace VolleyStats.Views
             if (change.Property == VideoPathProperty)
             {
                 var path = change.GetNewValue<string?>();
-                Console.WriteLine($"[VIDEO] VideoPath changed -> '{path}', player ready: {_player != null}");
                 if (_player != null)
                     Load(path);
                 else
@@ -138,13 +436,14 @@ namespace VolleyStats.Views
 
         private void Load(string? path)
         {
-            if (_player == null || Program.LibVlc == null) return;
-
-            Console.WriteLine($"[VIDEO] Load('{path}') file exists: {(path != null ? System.IO.File.Exists(path).ToString() : "n/a")}");
+            if (Program.LibVlc == null) return;
 
             if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
             {
-                _player.Stop();
+                _activePooled?.Player.Pause();
+                _activePooled = null;
+                _activePooledPath = null;
+                _player?.Stop();
                 Dispatcher.UIThread.Post(() =>
                 {
                     VideoImage.IsVisible = false;
@@ -154,43 +453,146 @@ namespace VolleyStats.Views
                 return;
             }
 
-            Dispatcher.UIThread.Post(() =>
+            // Try pooled player
+            if (_pool != null && _pool.TryGetValue(path, out var pooled))
             {
-                VideoImage.IsVisible = true;
-                StatusText.IsVisible = false;
-            });
+                if (_activePooledPath != null &&
+                    _activePooledPath.Equals(path, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Same video, just seek (handled by SeekTo via property change)
+                    return;
+                }
 
-            using var media = new Media(Program.LibVlc, path, FromType.FromPath);
-            _player.Play(media);
+                // Pause previous pooled player
+                if (_activePooled != null && _activePooled != pooled)
+                {
+                    try { _activePooled.Player.Pause(); } catch { }
+                }
+
+                _skipFrames = int.MaxValue;
+                _activePooled = pooled;
+                _activePooledPath = path;
+                _player = pooled.Player;
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_detached) return;
+                    VideoImage.IsVisible = false;
+                    StatusText.IsVisible = false;
+                });
+
+                // Resume the pooled player — seek will happen via SeekTo
+                if (pooled.Player.State == VLCState.Paused)
+                    pooled.Player.Play();
+
+                return;
+            }
+
+            // Fallback: single-player mode
+            if (_player == null) return;
+
+            try
+            {
+                _pauseAfterSeek = PauseOnLoad;
+                if (!PauseOnLoad)
+                {
+                    _skipFrames = int.MaxValue;
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (_detached) return;
+                        VideoImage.IsVisible = false;
+                        StatusText.IsVisible = false;
+                    });
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (_detached) return;
+                        VideoImage.IsVisible = true;
+                        StatusText.IsVisible = false;
+                    });
+                }
+                using var media = new Media(Program.LibVlc, path, FromType.FromPath);
+                _player.Play(media);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Video error: {ex.Message}");
+            }
         }
+
+        private CancellationTokenSource? _seekCts;
 
         private void SeekTo(int seconds)
         {
-            if (_player == null) return;
-            var ms = (long)seconds * 1000;
-            var state = _player.State;
-            if (state == VLCState.Playing || state == VLCState.Paused)
-                _player.Time = ms;
-            else
-                _pendingSeek = seconds;
+            var player = _player;
+            if (player == null) return;
+
+            _pendingSeek = seconds;
+
+            try
+            {
+                var state = player.State;
+                if (state == VLCState.Playing || state == VLCState.Paused)
+                {
+                    _seekCts?.Cancel();
+                    _seekCts = new CancellationTokenSource();
+                    var token = _seekCts.Token;
+                    var isPooled = _activePooled != null;
+
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(100, token);
+                        if (token.IsCancellationRequested || _detached) return;
+                        var seek = _pendingSeek;
+                        if (!seek.HasValue) return;
+                        _pendingSeek = null;
+                        var ms = (long)seek.Value * 1000;
+                        try
+                        {
+                            var length = player.Length;
+                            if (length > 0 && ms >= length)
+                                ms = Math.Max(0, length - 2000);
+                            player.Time = ms;
+                            if (isPooled)
+                                _skipFrames = 3;
+                        }
+                        catch { }
+                    }, token);
+                }
+            }
+            catch { }
         }
 
         // ── VLC Callbacks ────────────────────────────────────────────────────
 
         private IntPtr Lock(IntPtr opaque, IntPtr planes)
         {
-            Marshal.WriteIntPtr(planes, _bufHandle.AddrOfPinnedObject());
+            if (_detached)
+                Marshal.WriteIntPtr(planes, DummyHandle.AddrOfPinnedObject());
+            else
+                Marshal.WriteIntPtr(planes, _bufHandle.AddrOfPinnedObject());
             return IntPtr.Zero;
         }
 
         private void Display(IntPtr opaque, IntPtr picture)
         {
+            if (_detached) return;
+            var skip = _skipFrames;
+            if (skip > 0)
+            {
+                Interlocked.Decrement(ref _skipFrames);
+                if (skip == 1)
+                    Dispatcher.UIThread.Post(() => { if (!_detached) VideoImage.IsVisible = true; });
+                return;
+            }
             if (Interlocked.CompareExchange(ref _uiReady, 0, 1) != 1) return;
             Dispatcher.UIThread.Post(() =>
             {
                 try
                 {
-                    if (_bitmap == null) return;
+                    if (_bitmap == null || _detached) return;
                     using var fb = _bitmap.Lock();
                     Marshal.Copy(_buf, 0, fb.Address, FrameBytes);
                     VideoImage.InvalidateVisual();
@@ -271,12 +673,13 @@ namespace VolleyStats.Views
         private void ShowStatus(string text) =>
             Dispatcher.UIThread.Post(() =>
             {
+                if (_detached) return;
                 StatusText.Text = text;
                 StatusText.IsVisible = true;
                 VideoImage.IsVisible = false;
             });
 
         private void HideStatus() =>
-            Dispatcher.UIThread.Post(() => StatusText.IsVisible = false);
+            Dispatcher.UIThread.Post(() => { if (!_detached) StatusText.IsVisible = false; });
     }
 }

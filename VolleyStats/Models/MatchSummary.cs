@@ -8,7 +8,9 @@ namespace VolleyStats.Models
         public string FilePath { get; set; } = string.Empty;
         public string? Season { get; set; }
         public string HomeTeam { get; set; } = string.Empty;
+        public string? HomeTeamCode { get; set; }
         public string AwayTeam { get; set; } = string.Empty;
+        public string? AwayTeamCode { get; set; }
         public int? HomeSets { get; set; }
         public int? AwaySets { get; set; }
         public DateOnly? Date { get; set; }

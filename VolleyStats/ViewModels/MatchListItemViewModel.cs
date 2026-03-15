@@ -21,6 +21,8 @@ namespace VolleyStats.ViewModels
             Season = summary.Season;
             HomeTeam = summary.HomeTeam;
             AwayTeam = summary.AwayTeam;
+            HomeTeamCode = summary.HomeTeamCode;
+            AwayTeamCode = summary.AwayTeamCode;
             HomeSets = summary.HomeSets;
             AwaySets = summary.AwaySets;
             Date = summary.Date;
@@ -29,11 +31,20 @@ namespace VolleyStats.ViewModels
             Phase = summary.Phase;
         }
 
+        public bool ContainsTeam(string teamName) =>
+            HomeTeam.Equals(teamName, StringComparison.OrdinalIgnoreCase) ||
+            AwayTeam.Equals(teamName, StringComparison.OrdinalIgnoreCase);
+
         public string FileName { get; }
         public string FilePath { get; }
         public string? Season { get; }
         public string HomeTeam { get; }
         public string AwayTeam { get; }
+        public string? HomeTeamCode { get; }
+        public string? AwayTeamCode { get; }
+
+        public string HomeTeamDisplay => string.IsNullOrEmpty(HomeTeamCode) ? HomeTeam : $"{HomeTeam} ({HomeTeamCode})";
+        public string AwayTeamDisplay => string.IsNullOrEmpty(AwayTeamCode) ? AwayTeam : $"{AwayTeam} ({AwayTeamCode})";
         public int? HomeSets { get; }
         public int? AwaySets { get; }
         public DateOnly? Date { get; }

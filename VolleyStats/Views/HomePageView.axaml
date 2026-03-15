@@ -70,7 +70,7 @@
                             <Button Content="+ New Match"
                                     Padding="12,6" />
                             <Button Content="Analysis"
-                                    IsEnabled="{Binding HasSelectedMatches}"
+                                    Command="{Binding AnalyzeCommand}"
                                     Padding="12,6" />
                         </StackPanel>
 
@@ -148,16 +148,11 @@
                                 <Grid ColumnDefinitions="Auto,96,*" ColumnSpacing="20">
 
                                     <!-- Select toggle -->
-                                    <ToggleButton Grid.Column="0"
-                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                  Width="30" Height="30"
-                                                  CornerRadius="15"
-                                                  Padding="0"
-                                                  VerticalAlignment="Center"
-                                                  FontSize="14"
-                                                  FontWeight="Bold"
-                                                  Content="✓"
-                                                  ToolTip.Tip="Select match" />
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              VerticalAlignment="Center"
+                                              Margin="4,0,0,0"
+                                              ToolTip.Tip="Select match" />
 
                                     <!-- Date & Time -->
                                     <StackPanel Grid.Column="1"

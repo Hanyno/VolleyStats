@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using VolleyStats.Enums;
 using VolleyStats.Models;
@@ -63,6 +64,21 @@ namespace VolleyStats.ViewModels
             get => _currentSet;
             private set => SetProperty(ref _currentSet, value);
         }
+
+        // ── Serving team ─────────────────────────────────────────────────────
+
+        private bool _isHomeServing;
+        public bool IsHomeServing
+        {
+            get => _isHomeServing;
+            private set
+            {
+                if (SetProperty(ref _isHomeServing, value))
+                    OnPropertyChanged(nameof(IsAwayServing));
+            }
+        }
+
+        public bool IsAwayServing => !_isHomeServing;
 
         // ── Setter zones (1-6, 0 = unknown) ──────────────────────────────────
 
@@ -146,6 +162,7 @@ namespace VolleyStats.ViewModels
         public IRelayCommand RotateHomeCommand      { get; }
         public IRelayCommand RotateAwayCommand      { get; }
         public IRelayCommand EndSetCommand          { get; }
+        public IRelayCommand ToggleServingCommand   { get; }
 
         public ScoutingSetManager()
         {
@@ -157,6 +174,7 @@ namespace VolleyStats.ViewModels
             RotateHomeCommand       = new RelayCommand(RotateHome);
             RotateAwayCommand       = new RelayCommand(RotateAway);
             EndSetCommand           = new RelayCommand(EndSet,                    () => IsActiveSet);
+            ToggleServingCommand    = new RelayCommand(ToggleServing,             () => IsActiveSet);
         }
 
         // ── Set lifecycle ─────────────────────────────────────────────────────
@@ -166,6 +184,27 @@ namespace VolleyStats.ViewModels
             LiveHomeScore = 0;
             LiveAwayScore = 0;
             IsActiveSet   = true;
+        }
+
+        public void StartSetWithLineup(string[] homePos, string[] awayPos, int homeSetterZone, int awaySetterZone, bool isHomeServing)
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                _homePositions[i] = homePos[i];
+                _awayPositions[i] = awayPos[i];
+            }
+            HomeSetterZone = homeSetterZone;
+            AwaySetterZone = awaySetterZone;
+            IsHomeServing  = isHomeServing;
+            LiveHomeScore  = 0;
+            LiveAwayScore  = 0;
+            IsActiveSet    = true;
+            PositionsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void ToggleServing()
+        {
+            IsHomeServing = !IsHomeServing;
         }
 
         /// <summary>
@@ -328,8 +367,121 @@ namespace VolleyStats.ViewModels
                 if (s.FinalScore != null)
                     SetScores.Add(new SetScoreItemViewModel(i + 1, s.FinalScore.HomeTeamScore, s.FinalScore.AwayTeamScore));
             }
-            CurrentSet  = sets.Count + 1;
+            CurrentSet  = SetScores.Count + 1;
             IsActiveSet = false;
+        }
+
+        /// <summary>
+        /// Detects an unfinished set (no **Nset end marker after the last finished set)
+        /// and resumes it by reconstructing score, timeouts, substitutions, positions,
+        /// and setter zones from the scout codes.
+        /// </summary>
+        public void ResumeUnfinishedSet(IReadOnlyList<Code> allCodes)
+        {
+            // Find the last end-set marker
+            int lastEndSetIdx = -1;
+            for (int i = allCodes.Count - 1; i >= 0; i--)
+            {
+                if (allCodes[i] is CodeEndSet)
+                {
+                    lastEndSetIdx = i;
+                    break;
+                }
+            }
+
+            // No codes after the last end-set → nothing to resume
+            if (lastEndSetIdx >= allCodes.Count - 1) return;
+
+            // Get positions from the last code with valid (all non-zero) zone data
+            string[]? homePositions = null, awayPositions = null;
+            for (int i = allCodes.Count - 1; i > lastEndSetIdx; i--)
+            {
+                var c = allCodes[i];
+                if (homePositions == null && c.HomeZones.Length >= 6)
+                {
+                    bool valid = c.HomeZones.Take(6).All(z => z > 0);
+                    if (valid)
+                        homePositions = c.HomeZones.Take(6).Select(z => z.ToString()).ToArray();
+                }
+                if (awayPositions == null && c.AwayZones.Length >= 6)
+                {
+                    bool valid = c.AwayZones.Take(6).All(z => z > 0);
+                    if (valid)
+                        awayPositions = c.AwayZones.Take(6).Select(z => z.ToString()).ToArray();
+                }
+                if (homePositions != null && awayPositions != null) break;
+            }
+
+            // If no position data found at all, can't resume
+            if (homePositions == null && awayPositions == null) return;
+
+            // Scan unfinished set codes for state
+            int homeScore = 0, awayScore = 0;
+            int homeTimeouts = 0, awayTimeouts = 0;
+            int homeSubs = 0, awaySubs = 0;
+            int homeSetterZ = 0, awaySetterZ = 0;
+            bool isHomeServing = true;
+            bool servingFromScore = false;
+
+            for (int i = lastEndSetIdx + 1; i < allCodes.Count; i++)
+            {
+                var code = allCodes[i];
+                switch (code)
+                {
+                    case CodeLineUp lu:
+                        if (lu.Team == TeamSide.Home && lu.SetterZone.HasValue)
+                            homeSetterZ = lu.SetterZone.Value;
+                        else if (lu.Team == TeamSide.Away && lu.SetterZone.HasValue)
+                            awaySetterZ = lu.SetterZone.Value;
+                        break;
+                    case CodeRotation rot:
+                        if (rot.Team == TeamSide.Home && rot.SetterZone.HasValue)
+                            homeSetterZ = rot.SetterZone.Value;
+                        else if (rot.Team == TeamSide.Away && rot.SetterZone.HasValue)
+                            awaySetterZ = rot.SetterZone.Value;
+                        break;
+                    case CodeTimeout to:
+                        if (to.Team == TeamSide.Home) homeTimeouts++;
+                        else awayTimeouts++;
+                        break;
+                    case CodeSubstitution sub:
+                        if (sub.Team == TeamSide.Home) homeSubs++;
+                        else awaySubs++;
+                        break;
+                    case CodeScoreMarker sm:
+                        homeScore = sm.HomePoints ?? 0;
+                        awayScore = sm.AwayPoints ?? 0;
+                        isHomeServing = sm.Team == TeamSide.Home;
+                        servingFromScore = true;
+                        break;
+                    case BallContactCode bc:
+                        // Use the first serve code to determine initial serving
+                        // (score markers override this later)
+                        if (!servingFromScore && bc.Skill == Skill.Serve)
+                            isHomeServing = bc.Team == TeamSide.Home;
+                        break;
+                }
+            }
+
+            // Apply positions
+            if (homePositions != null)
+                for (int i = 0; i < 6; i++) _homePositions[i] = homePositions[i];
+            if (awayPositions != null)
+                for (int i = 0; i < 6; i++) _awayPositions[i] = awayPositions[i];
+
+            if (homeSetterZ > 0) HomeSetterZone = homeSetterZ;
+            if (awaySetterZ > 0) AwaySetterZone = awaySetterZ;
+
+            LiveHomeScore = homeScore;
+            LiveAwayScore = awayScore;
+            HomeTimeoutsLeft = Math.Max(0, 2 - homeTimeouts);
+            AwayTimeoutsLeft = Math.Max(0, 2 - awayTimeouts);
+            HomeSubstitutionsLeft = Math.Max(0, 6 - homeSubs);
+            AwaySubstitutionsLeft = Math.Max(0, 6 - awaySubs);
+            IsHomeServing = isHomeServing;
+            IsActiveSet = true;
+
+            PositionsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public void InitSetterZonesFromCodes(IReadOnlyList<Code> codes)
@@ -362,6 +514,7 @@ namespace VolleyStats.ViewModels
             ((RelayCommand)HomeSubstitutionCommand).NotifyCanExecuteChanged();
             ((RelayCommand)AwaySubstitutionCommand).NotifyCanExecuteChanged();
             ((RelayCommand)EndSetCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)ToggleServingCommand).NotifyCanExecuteChanged();
         }
     }
 }

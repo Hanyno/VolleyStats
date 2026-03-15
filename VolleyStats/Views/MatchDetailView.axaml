@@ -32,6 +32,14 @@
                             Padding="10,7"
                             VerticalAlignment="Center"
                             Click="EditInfoButton_OnClick" />
+                    <Button Content="💾 Save"
+                            Command="{Binding SaveCommand}"
+                            Padding="10,7"
+                            VerticalAlignment="Center" />
+                    <Button Content="🎬 Video"
+                            Padding="10,7"
+                            VerticalAlignment="Center"
+                            Click="ChangeVideoButton_OnClick" />
                 </StackPanel>
 
                 <!-- Right: Score badge -->
@@ -122,11 +130,6 @@
                             </ItemsControl>
 
                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                <Button Content="Start Set"
-                                        Command="{Binding SetManager.StartSetCommand}"
-                                        FontSize="11"
-                                        Padding="6,3"
-                                        IsVisible="{Binding SetManager.IsNotActiveSet}" />
                                 <Button Content="End Set"
                                         Command="{Binding SetManager.EndSetCommand}"
                                         FontSize="11"
@@ -197,127 +200,194 @@
                     </Button>
                 </Grid>
 
-                <!-- Row 2: Small volleyball court -->
-                <Border Grid.Row="2"
-                        Height="190"
-                        Background="#166534"
-                        CornerRadius="6"
-                        ClipToBounds="True">
-                    <Grid RowDefinitions="*,2,*">
+                <!-- Row 2: Serving indicator (away) + Court + Serving indicator (home) -->
+                <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto">
 
-                        <!-- Away half -->
-                        <Grid Grid.Row="0">
-                            <Grid RowDefinitions="*,*" Margin="8,6,8,4">
-                                <!-- Away back row: 1, 6, 5 -->
-                                <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
-                                    <Border Grid.Column="0" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos1}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos6}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="2" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos5}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
+                    <!-- Away serving ball (left, above zone 1) -->
+                    <Button Grid.Row="0"
+                            Command="{Binding SetManager.ToggleServingCommand}"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Margin="12,0,0,1"
+                            Cursor="Hand"
+                            IsVisible="{Binding SetManager.IsActiveSet}">
+                        <Panel Width="16" Height="16">
+                            <Ellipse Width="14" Height="14"
+                                     Fill="#FBBF24"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding SetManager.IsAwayServing}" />
+                            <Ellipse Width="14" Height="14"
+                                     Stroke="#FBBF24" StrokeThickness="2"
+                                     Fill="Transparent"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding SetManager.IsHomeServing}" />
+                        </Panel>
+                    </Button>
+
+                    <!-- Court -->
+                    <Border Grid.Row="1"
+                            Height="190"
+                            Background="#166534"
+                            CornerRadius="6"
+                            ClipToBounds="True">
+                        <Panel>
+
+                            <!-- Start Set button (when no active set) -->
+                            <Button Content="▶  Start Set"
+                                    IsVisible="{Binding SetManager.IsNotActiveSet}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    Padding="24,12"
+                                    Click="StartSetButton_OnClick" />
+
+                            <!-- Court positions (when active set) -->
+                            <Grid RowDefinitions="*,2,*"
+                                  IsVisible="{Binding SetManager.IsActiveSet}">
+
+                                <!-- Away half -->
+                                <Grid Grid.Row="0">
+                                    <Grid RowDefinitions="*,*" Margin="8,6,8,4">
+                                        <!-- Away back row: 1, 6, 5 -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                            <Border Grid.Column="0" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos1}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="1" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos6}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="2" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos5}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                        <!-- Away front row: 2, 3, 4 -->
+                                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                            <Border Grid.Column="0" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos2}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="1" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos3}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="2" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
+                                                <TextBlock Text="{Binding AwayPos4}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
-                                <!-- Away front row: 2, 3, 4 -->
-                                <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
-                                    <Border Grid.Column="0" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos2}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos3}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="2" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
-                                        <TextBlock Text="{Binding AwayPos4}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
+
+                                <!-- Net -->
+                                <Border Grid.Row="1" Background="White" Opacity="0.7" />
+
+                                <!-- Home half -->
+                                <Grid Grid.Row="2">
+                                    <Grid RowDefinitions="*,*" Margin="8,4,8,6">
+                                        <!-- Home front row: 4, 3, 2 -->
+                                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                            <Border Grid.Column="0" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos4}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="1" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos3}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="2" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos2}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                        <!-- Home back row: 5, 6, 1 -->
+                                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
+                                            <Border Grid.Column="0" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos5}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="1" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos6}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border Grid.Column="2" HorizontalAlignment="Center"
+                                                    Width="32" Height="32" CornerRadius="16"
+                                                    Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
+                                                <TextBlock Text="{Binding HomePos1}" Foreground="White"
+                                                           FontWeight="Bold" FontSize="13"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
+
                             </Grid>
-                        </Grid>
 
-                        <!-- Net -->
-                        <Border Grid.Row="1" Background="White" Opacity="0.7" />
+                        </Panel>
+                    </Border>
 
-                        <!-- Home half -->
-                        <Grid Grid.Row="2">
-                            <Grid RowDefinitions="*,*" Margin="8,4,8,6">
-                                <!-- Home front row: 4, 3, 2 -->
-                                <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
-                                    <Border Grid.Column="0" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos4}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos3}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="2" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos2}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </Grid>
-                                <!-- Home back row: 5, 6, 1 -->
-                                <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
-                                    <Border Grid.Column="0" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos5}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos6}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <Border Grid.Column="2" HorizontalAlignment="Center"
-                                            Width="32" Height="32" CornerRadius="16"
-                                            Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
-                                        <TextBlock Text="{Binding HomePos1}" Foreground="White"
-                                                   FontWeight="Bold" FontSize="13"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </Grid>
-                            </Grid>
-                        </Grid>
+                    <!-- Home serving ball (right, below zone 1) -->
+                    <Button Grid.Row="2"
+                            Command="{Binding SetManager.ToggleServingCommand}"
+                            HorizontalAlignment="Right"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Margin="0,1,12,0"
+                            Cursor="Hand"
+                            IsVisible="{Binding SetManager.IsActiveSet}">
+                        <Panel Width="16" Height="16">
+                            <Ellipse Width="14" Height="14"
+                                     Fill="#FBBF24"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding SetManager.IsHomeServing}" />
+                            <Ellipse Width="14" Height="14"
+                                     Stroke="#FBBF24" StrokeThickness="2"
+                                     Fill="Transparent"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding SetManager.IsAwayServing}" />
+                        </Panel>
+                    </Button>
 
-                    </Grid>
-                </Border>
+                </Grid>
 
                 <!-- Row 3: Home action buttons (below court) -->
                 <Grid Grid.Row="3"
@@ -438,8 +508,7 @@
                         CornerRadius="6"
                         ClipToBounds="True">
                     <views:VideoPlayerControl
-                        VideoPath="{Binding VideoSourcePath}"
-                        VideoSeekSeconds="{Binding VideoSeekSeconds}" />
+                        x:Name="VideoPlayer" />
                 </Border>
 
             </Grid>

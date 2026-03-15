@@ -13,8 +13,59 @@ namespace VolleyStats.Data
     public class DvwFileParser
     {
         /// <summary>
+        /// Replaces the [3SCOUT] section in the given DVW file with the provided raw lines,
+        /// preserving all other sections.
+        /// </summary>
+        public void SaveScoutCodes(string filePath, IEnumerable<string> scoutRawLines)
+        {
+            var encoding = Encoding.GetEncoding("Windows-1250");
+            var lines = File.ReadAllLines(filePath, encoding);
+            var output = new List<string>();
+
+            int scoutStart = Array.FindIndex(lines, l =>
+                l != null && l.Trim().Equals("[3SCOUT]", StringComparison.OrdinalIgnoreCase));
+
+            if (scoutStart < 0)
+            {
+                // No [3SCOUT] section yet — append it at the end
+                output.AddRange(lines);
+                output.Add("[3SCOUT]");
+                foreach (var rl in scoutRawLines)
+                    output.Add(rl);
+            }
+            else
+            {
+                // Copy everything before [3SCOUT] (inclusive)
+                for (int i = 0; i <= scoutStart; i++)
+                    output.Add(lines[i]);
+
+                // Write new scout codes
+                foreach (var rl in scoutRawLines)
+                    output.Add(rl);
+
+                // Skip old scout codes, find next section
+                bool foundNext = false;
+                for (int i = scoutStart + 1; i < lines.Length; i++)
+                {
+                    var trimmed = (lines[i] ?? "").Trim();
+                    if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                    {
+                        // Copy from this section onward
+                        for (int j = i; j < lines.Length; j++)
+                            output.Add(lines[j]);
+                        foundNext = true;
+                        break;
+                    }
+                }
+                // If [3SCOUT] was the last section, nothing more to copy
+            }
+
+            File.WriteAllLines(filePath, output, encoding);
+        }
+
+        /// <summary>
         /// Parses a .dvw file at the given path into a fully populated <see cref="Match"/> object.
-        /// This is the main entry point � implement section dispatching here.
+        /// This is the main entry point — implement section dispatching here.
         /// </summary>
         public Match ParseDvwFile(string filePath)
         {
@@ -881,6 +932,7 @@ namespace VolleyStats.Data
             if (homeLine != null)
             {
                 var f = SplitSemicolonKeepEmpties(homeLine);
+                summary.HomeTeamCode = NullIfEmpty(Get(f, 0));
                 summary.HomeTeam = (Get(f, 1) ?? "").Trim();
                 summary.HomeSets = ParseNullableInt(Get(f, 2));
             }
@@ -888,6 +940,7 @@ namespace VolleyStats.Data
             if (awayLine != null)
             {
                 var f = SplitSemicolonKeepEmpties(awayLine);
+                summary.AwayTeamCode = NullIfEmpty(Get(f, 0));
                 summary.AwayTeam = (Get(f, 1) ?? "").Trim();
                 summary.AwaySets = ParseNullableInt(Get(f, 2));
             }

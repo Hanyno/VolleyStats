@@ -1,5 +1,6 @@
 using Avalonia.Controls;
-using System.Collections.Generic;
+using Avalonia.Platform.Storage;
+using System.Linq;
 using System.Threading.Tasks;
 using VolleyStats.Models;
 using VolleyStats.ViewModels;
@@ -40,55 +41,33 @@ namespace VolleyStats.Views
 
         public async Task<string?> PickSqFileAsync()
         {
-            var dialog = new OpenFileDialog
+            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
-                Filters = new List<FileDialogFilter>
+                FileTypeFilter = new[]
                 {
-                    new FileDialogFilter
-                    {
-                        Name = "DataVolley sq",
-                        Extensions = new List<string> { "sq" }
-                    },
-                    new FileDialogFilter
-                    {
-                        Name = "All files",
-                        Extensions = new List<string> { "*" }
-                    }
+                    new FilePickerFileType("DataVolley sq") { Patterns = new[] { "*.sq" } },
+                    new FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
                 }
-            };
+            });
 
-            var result = await dialog.ShowAsync(this);
-            if (result != null && result.Length > 0)
-            {
-                return result[0];
-            }
-
-            return null;
+            return files.Count > 0 ? files[0].TryGetLocalPath() : null;
         }
 
         public async Task<string?> PickSqSavePathAsync(string defaultFileName)
         {
-            var dialog = new SaveFileDialog
+            var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 DefaultExtension = "sq",
-                InitialFileName = defaultFileName,
-                Filters = new List<FileDialogFilter>
+                SuggestedFileName = defaultFileName,
+                FileTypeChoices = new[]
                 {
-                    new FileDialogFilter
-                    {
-                        Name = "DataVolley sq",
-                        Extensions = new List<string> { "sq" }
-                    },
-                    new FileDialogFilter
-                    {
-                        Name = "All files",
-                        Extensions = new List<string> { "*" }
-                    }
+                    new FilePickerFileType("DataVolley sq") { Patterns = new[] { "*.sq" } },
+                    new FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
                 }
-            };
+            });
 
-            return await dialog.ShowAsync(this);
+            return file?.TryGetLocalPath();
         }
     }
 }

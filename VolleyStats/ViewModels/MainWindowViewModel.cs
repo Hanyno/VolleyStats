@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
@@ -58,7 +59,7 @@ namespace VolleyStats.ViewModels
 
         private HomePageViewModel CreateHomeViewModel(TabItemViewModel tab)
         {
-            return new HomePageViewModel(
+            var vm = new HomePageViewModel(
                 _matchSummaryLoader,
                 _teamsRepository,
                 async matchItem => await OpenMatchInTab(tab, matchItem),
@@ -76,6 +77,23 @@ namespace VolleyStats.ViewModels
                     tab.Header = "Settings";
                     tab.Content = settingsVm;
                 });
+            vm.OpenAnalysis = (filePaths, team) => OpenAnalysisInTab(tab, filePaths, team);
+            return vm;
+        }
+
+        private async Task OpenAnalysisInTab(TabItemViewModel tab, IReadOnlyList<string> matchFilePaths, string analysisTeam)
+        {
+            var analysisVm = new AnalysisViewModel(matchFilePaths, analysisTeam, async () =>
+            {
+                var homeVm = CreateHomeViewModel(tab);
+                tab.Header = "Home";
+                tab.Content = homeVm;
+                await homeVm.InitializeAsync();
+            });
+
+            tab.Header = $"Analysis: {analysisTeam}";
+            tab.Content = analysisVm;
+            await analysisVm.InitializeAsync();
         }
 
         private async Task OpenMatchInTab(TabItemViewModel tab, MatchListItemViewModel matchItem)

@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using VolleyStats.Data;
+using VolleyStats.Enums;
 using VolleyStats.Models;
 using VolleyStats.ViewModels;
 
@@ -22,7 +25,6 @@ namespace VolleyStats.Views
 
             CodesList.DoubleTapped += (_, _) => OpenEditDialog();
             CodesList.KeyDown      += CodesListOnKeyDown;
-            CodesList.Tapped       += (_, _) => ViewModel?.SeekToSelectedCode();
 
             ScoutCodeBox.AddHandler(KeyDownEvent, OnScoutCodeBoxKeyDown, RoutingStrategies.Tunnel);
 
@@ -37,6 +39,34 @@ namespace VolleyStats.Views
                 vm.TriggerSubstitutionDialog = isHome => OpenSubstitutionAsync(isHome);
                 vm.TriggerSetterPickerDialog  = isHome => OpenSetterPickerAsync(isHome);
                 vm.TriggerEndSetDialog        = side   => ShowEndSetConfirmAsync(side);
+                vm.InitializationCompleted   += OnInitializationCompleted;
+                vm.PropertyChanged           += OnViewModelPropertyChanged;
+            }
+        }
+
+        private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is not MatchDetailViewModel vm) return;
+
+            if (e.PropertyName == nameof(MatchDetailViewModel.VideoSourcePath))
+                VideoPlayer.VideoPath = vm.VideoSourcePath;
+            else if (e.PropertyName == nameof(MatchDetailViewModel.VideoSeekSeconds))
+                VideoPlayer.VideoSeekSeconds = vm.VideoSeekSeconds;
+        }
+
+        private void OnInitializationCompleted(object? sender, EventArgs e)
+        {
+            if (sender is MatchDetailViewModel vm)
+            {
+                if (vm.Codes.Count > 0)
+                {
+                    var lastCode = vm.Codes[vm.Codes.Count - 1];
+                    vm.SelectedCode = lastCode;
+                    CodesList.ScrollIntoView(lastCode);
+                }
+
+                // VideoPath is already pushed by OnViewModelPropertyChanged
+                // when VideoSourcePath fires PropertyChanged — no need to set it again here.
             }
         }
 
@@ -93,6 +123,66 @@ namespace VolleyStats.Views
         private void CodesListOnKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter) OpenEditDialog();
+            else if (e.Key == Key.Delete) DeleteSelectedCode();
+        }
+
+        private async void DeleteSelectedCode()
+        {
+            var parentWindow = GetParentWindow();
+            var vm = ViewModel;
+            if (parentWindow == null || vm?.SelectedCode == null) return;
+
+            var selected = vm.SelectedCode;
+            var dialog = new Window
+            {
+                Title = "Delete Code",
+                Width = 380,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(20),
+                    Spacing = 16,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = $"Delete code \"{selected.RawCode}\"?",
+                            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                        },
+                        new StackPanel
+                        {
+                            Orientation = Avalonia.Layout.Orientation.Horizontal,
+                            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                            Spacing = 8,
+                            Children =
+                            {
+                                new Button { Content = "Cancel", Tag = false },
+                                new Button { Content = "Delete", Tag = true }
+                            }
+                        }
+                    }
+                }
+            };
+
+            var panel = (StackPanel)((StackPanel)dialog.Content).Children[1];
+            foreach (var child in panel.Children)
+            {
+                if (child is Button btn)
+                    btn.Click += (_, _) => dialog.Close(btn.Tag);
+            }
+
+            var result = await dialog.ShowDialog<object?>(parentWindow);
+            if (result is true)
+            {
+                var idx = vm.Codes.IndexOf(selected);
+                vm.DeleteCode(selected);
+
+                // Select the next or previous code
+                if (vm.Codes.Count > 0)
+                    vm.SelectedCode = vm.Codes[Math.Min(idx, vm.Codes.Count - 1)];
+            }
         }
 
         private async void OpenEditDialog()
@@ -109,6 +199,63 @@ namespace VolleyStats.Views
 
             if (result != null)
                 selected.RawCode = result;
+        }
+
+        // ── Start set dialog ─────────────────────────────────────────────────
+
+        private async void StartSetButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            var parentWindow = GetParentWindow();
+            var vm = ViewModel;
+            if (parentWindow == null || vm == null) return;
+
+            var dialogVm = new StartSetViewModel(
+                vm.HomeTeamName, vm.AwayTeamName,
+                vm.HomePlayers, vm.AwayPlayers);
+            var dialog = new StartSetWindow(dialogVm);
+
+            var confirmed = await dialog.ShowDialog<bool?>(parentWindow);
+            if (confirmed == true)
+            {
+                var homePos = dialogVm.GetHomePositions();
+                var awayPos = dialogVm.GetAwayPositions();
+                var homeSetter = dialogVm.GetHomeSetter();
+                var awaySetter = dialogVm.GetAwaySetter();
+                var isHomeServing = dialogVm.GetIsHomeServing();
+
+                int homeSetterZone = Array.IndexOf(homePos, homeSetter) + 1;
+                int awaySetterZone = Array.IndexOf(awayPos, awaySetter) + 1;
+
+                vm.InsertLineUpCodes(homePos, awayPos, homeSetterZone, awaySetterZone);
+                vm.SetManager.StartSetWithLineup(homePos, awayPos, homeSetterZone, awaySetterZone, isHomeServing);
+            }
+        }
+
+        // ── Video file change ────────────────────────────────────────────────
+
+        private async void ChangeVideoButton_OnClick(object? sender, RoutedEventArgs e)
+        {
+            var topLevel = TopLevel.GetTopLevel(this);
+            var vm = ViewModel;
+            if (topLevel == null || vm == null) return;
+
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Select Video File",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Video files") { Patterns = new[] { "*.mp4", "*.avi", "*.mkv", "*.mov", "*.wmv" } },
+                    new FilePickerFileType("All files") { Patterns = new[] { "*.*" } }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var path = files[0].TryGetLocalPath();
+                if (path != null)
+                    vm.ChangeVideoPath(path);
+            }
         }
 
         // ── Match info editing ────────────────────────────────────────────────

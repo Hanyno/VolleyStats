@@ -1,0 +1,503 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewmodels="using:VolleyStats.ViewModels"
+        xmlns:models="using:VolleyStats.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.StartSetWindow"
+        x:DataType="viewmodels:StartSetViewModel"
+        Title="Start Set – Enter Lineup"
+        Width="640"
+        Height="530"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <!-- Court position textbox -->
+        <Style Selector="TextBox.court-input">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="CaretBrush" Value="White" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MaxLength" Value="2" />
+            <Setter Property="Padding" Value="0,8,0,0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="DragDrop.AllowDrop" Value="True" />
+        </Style>
+        <Style Selector="TextBox.court-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Setter textbox -->
+        <Style Selector="TextBox.setter-input">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="#FFD700" />
+            <Setter Property="CaretBrush" Value="#FFD700" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="MaxLength" Value="2" />
+            <Setter Property="Padding" Value="0,8,0,0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="DragDrop.AllowDrop" Value="True" />
+        </Style>
+        <Style Selector="TextBox.setter-input /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Draggable player item -->
+        <Style Selector="Border.player-item:pointerover">
+            <Setter Property="Background" Value="#22FFFFFF" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,10">
+            <TextBlock Text="Enter Starting Lineup"
+                       FontSize="16" FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+            <Button Grid.Column="1"
+                    Content="⇅ Swap Sides"
+                    Command="{Binding SwapSidesCommand}"
+                    FontSize="12"
+                    Padding="10,5" />
+        </Grid>
+
+        <!-- Main: [Top players] [Court] [Bottom players] -->
+        <Grid Grid.Row="1" ColumnDefinitions="120,*,120" ColumnSpacing="8">
+
+            <!-- Left: Top team player list -->
+            <Border Grid.Column="0"
+                    BorderBrush="{Binding TopAccent}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="6">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding TopTeamName}"
+                               Foreground="{Binding TopAccent}"
+                               FontWeight="SemiBold" FontSize="11"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,0,0,4" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding TopPlayers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:MatchPlayer">
+                                    <Border Classes="player-item"
+                                            Padding="4,3"
+                                            CornerRadius="3"
+                                            Cursor="Hand"
+                                            Background="Transparent"
+                                            PointerPressed="OnPlayerPointerPressed">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{Binding JerseyNumber}"
+                                                       FontWeight="Bold" FontSize="12"
+                                                       Width="20" TextAlignment="Right" />
+                                            <TextBlock Text="{Binding LastName}"
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Center: Court -->
+            <Border Grid.Column="1"
+                    Background="#166534"
+                    CornerRadius="8"
+                    ClipToBounds="True"
+                    Padding="12">
+                <Grid RowDefinitions="Auto,Auto,*,2,*,Auto,Auto">
+
+                    <!-- Top serving indicator (left, above zone 1) -->
+                    <Button Grid.Row="0"
+                            Command="{Binding ToggleServingCommand}"
+                            HorizontalAlignment="Left"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Margin="58,0,0,2"
+                            Cursor="Hand">
+                        <Panel Width="16" Height="16">
+                            <Ellipse Width="14" Height="14"
+                                     Fill="#FBBF24"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding IsTopServing}" />
+                            <Ellipse Width="14" Height="14"
+                                     Stroke="#FBBF24" StrokeThickness="2"
+                                     Fill="Transparent"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding IsBottomServing}" />
+                        </Panel>
+                    </Button>
+
+                    <!-- Top team label -->
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding TopTeamName}"
+                               Foreground="{Binding TopAccent}"
+                               FontSize="12" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,6" />
+
+                    <!-- Top half: setter on left, positions 3-col -->
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="Auto,*,*,*"
+                          RowDefinitions="*,*"
+                          Margin="4,0">
+
+                        <!-- Top Setter (left, spans 2 rows) -->
+                        <Grid Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                              Width="50" Height="50"
+                              VerticalAlignment="Center"
+                              Margin="0,0,8,0">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="#FFD700" BorderThickness="2" />
+                            <TextBlock Text="S" FontSize="8" Foreground="#FFD700" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopSetterBox"
+                                     Classes="setter-input"
+                                     Text="{Binding TopSetter, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!-- Top back row: 1, 6, 5 -->
+                        <Grid Grid.Column="1" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP1Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="1" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP1Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP1, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="2" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP6Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="6" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP6Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP6, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="3" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP5Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="5" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP5Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP5, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!-- Top front row: 2, 3, 4 -->
+                        <Grid Grid.Column="1" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP2Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="2" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP2Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP2, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="2" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP3Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="3" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP3Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP3, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="3" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding TopBackground}"
+                                    BorderBrush="{Binding TopBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsTopP4Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="4" FontSize="8" Foreground="{Binding TopAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="TopP4Box"
+                                     Classes="court-input"
+                                     Text="{Binding TopP4, Mode=TwoWay}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Net -->
+                    <Border Grid.Row="3" Background="White" Opacity="0.7" />
+
+                    <!-- Bottom half: positions 3-col, setter on right -->
+                    <Grid Grid.Row="4"
+                          ColumnDefinitions="*,*,*,Auto"
+                          RowDefinitions="*,*"
+                          Margin="4,0">
+
+                        <!-- Bottom front row: 4, 3, 2 -->
+                        <Grid Grid.Column="0" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP4Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="4" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP4Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP4, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="1" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP3Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="3" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP3Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP3, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="2" Grid.Row="0"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP2Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="2" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP2Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP2, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!-- Bottom back row: 5, 6, 1 -->
+                        <Grid Grid.Column="0" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP5Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="5" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP5Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP5, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="1" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP6Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="6" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP6Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP6, Mode=TwoWay}" />
+                        </Grid>
+
+                        <Grid Grid.Column="2" Grid.Row="1"
+                              Width="50" Height="42"
+                              HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="{Binding BottomBorder}" BorderThickness="1" />
+                            <Border CornerRadius="4" BorderBrush="#FFD700" BorderThickness="2"
+                                    IsVisible="{Binding IsBottomP1Setter}" IsHitTestVisible="False" />
+                            <TextBlock Text="1" FontSize="8" Foreground="{Binding BottomAccent}" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomP1Box"
+                                     Classes="court-input"
+                                     Text="{Binding BottomP1, Mode=TwoWay}" />
+                        </Grid>
+
+                        <!-- Bottom Setter (right side, spans 2 rows) -->
+                        <Grid Grid.Column="3" Grid.Row="0" Grid.RowSpan="2"
+                              Width="50" Height="50"
+                              VerticalAlignment="Center"
+                              Margin="8,0,0,0">
+                            <Border CornerRadius="4"
+                                    Background="{Binding BottomBackground}"
+                                    BorderBrush="#FFD700" BorderThickness="2" />
+                            <TextBlock Text="S" FontSize="8" Foreground="#FFD700" Opacity="0.8"
+                                       Margin="4,2,0,0"
+                                       HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       IsHitTestVisible="False" />
+                            <TextBox x:Name="BottomSetterBox"
+                                     Classes="setter-input"
+                                     Text="{Binding BottomSetter, Mode=TwoWay}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Bottom team label -->
+                    <TextBlock Grid.Row="5"
+                               Text="{Binding BottomTeamName}"
+                               Foreground="{Binding BottomAccent}"
+                               FontSize="12" FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               Margin="0,6,0,0" />
+
+                    <!-- Bottom serving indicator (right, below zone 1) -->
+                    <Button Grid.Row="6"
+                            Command="{Binding ToggleServingCommand}"
+                            HorizontalAlignment="Right"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            Margin="0,2,58,0"
+                            Cursor="Hand">
+                        <Panel Width="16" Height="16">
+                            <Ellipse Width="14" Height="14"
+                                     Fill="#FBBF24"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding IsBottomServing}" />
+                            <Ellipse Width="14" Height="14"
+                                     Stroke="#FBBF24" StrokeThickness="2"
+                                     Fill="Transparent"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     IsVisible="{Binding IsTopServing}" />
+                        </Panel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Right: Bottom team player list -->
+            <Border Grid.Column="2"
+                    BorderBrush="{Binding BottomAccent}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="6">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding BottomTeamName}"
+                               Foreground="{Binding BottomAccent}"
+                               FontWeight="SemiBold" FontSize="11"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,0,0,4" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding BottomPlayers}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:MatchPlayer">
+                                    <Border Classes="player-item"
+                                            Padding="4,3"
+                                            CornerRadius="3"
+                                            Cursor="Hand"
+                                            Background="Transparent"
+                                            PointerPressed="OnPlayerPointerPressed">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{Binding JerseyNumber}"
+                                                       FontWeight="Bold" FontSize="12"
+                                                       Width="20" TextAlignment="Right" />
+                                            <TextBlock Text="{Binding LastName}"
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+        </Grid>
+
+        <!-- Footer buttons -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,12,0,0">
+            <Button Content="Cancel" Click="CancelButton_OnClick" />
+            <Button Content="Confirm" Click="ConfirmButton_OnClick"
+                    IsEnabled="{Binding CanConfirm}" />
+        </StackPanel>
+    </Grid>
+
+</Window>

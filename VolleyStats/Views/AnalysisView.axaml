@@ -1,0 +1,179 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewmodels="using:VolleyStats.ViewModels"
+             xmlns:views="using:VolleyStats.Views"
+             mc:Ignorable="d"
+             x:Class="VolleyStats.Views.AnalysisView"
+             d:DesignWidth="1200"
+             d:DesignHeight="800"
+             x:DataType="viewmodels:AnalysisViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Padding="24,14,24,12"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Content="← Back"
+                            Command="{Binding BackCommand}"
+                            Padding="12,7" />
+                    <TextBlock Text="{Binding AnalysisTeam}"
+                               FontSize="17" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Before / After seconds -->
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            Spacing="12"
+                            VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Before:" VerticalAlignment="Center" FontSize="12" />
+                        <Button Content="-" Command="{Binding DecrementBeforeCommand}"
+                                Padding="6,3" FontSize="12" />
+                        <TextBlock Text="{Binding SecondsBefore, StringFormat='{}{0}s'}"
+                                   VerticalAlignment="Center" FontWeight="Bold" FontSize="13" MinWidth="24"
+                                   TextAlignment="Center" />
+                        <Button Content="+" Command="{Binding IncrementBeforeCommand}"
+                                Padding="6,3" FontSize="12" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="After:" VerticalAlignment="Center" FontSize="12" />
+                        <Button Content="-" Command="{Binding DecrementAfterCommand}"
+                                Padding="6,3" FontSize="12" />
+                        <TextBlock Text="{Binding SecondsAfter, StringFormat='{}{0}s'}"
+                                   VerticalAlignment="Center" FontWeight="Bold" FontSize="13" MinWidth="24"
+                                   TextAlignment="Center" />
+                        <Button Content="+" Command="{Binding IncrementAfterCommand}"
+                                Padding="6,3" FontSize="12" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Panel />
+            </DockPanel>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,280" ColumnSpacing="0">
+
+            <!-- Left: Video player -->
+            <Border Grid.Column="0"
+                    Margin="16,12,8,16"
+                    CornerRadius="6"
+                    ClipToBounds="True">
+                <views:VideoPlayerControl x:Name="VideoPlayer" PauseOnLoad="False" />
+            </Border>
+
+            <!-- Right: Filters + codes list -->
+            <Border Grid.Column="1"
+                    Margin="8,12,16,16"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <!-- Codes header -->
+                    <Border Grid.Row="0"
+                            Padding="10,6"
+                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                            BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Codes"
+                                       FontWeight="SemiBold"
+                                       FontSize="13" />
+                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                    CornerRadius="10"
+                                    Padding="7,2"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding FilteredCodes.Count}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Codes list -->
+                    <ListBox Grid.Row="1"
+                             x:Name="CodesList"
+                             ItemsSource="{Binding FilteredCodes}"
+                             SelectedItem="{Binding SelectedCode, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:AnalysisCodeItem">
+                                <StackPanel Spacing="1" Margin="4,2">
+                                    <TextBlock Text="{Binding DisplayCode}"
+                                               FontFamily="Consolas,Courier New,monospace"
+                                               FontSize="13" />
+                                    <TextBlock Text="{Binding MatchLabel}"
+                                               FontSize="10"
+                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Filter textboxes -->
+                    <Border Grid.Row="2"
+                            Padding="3,2"
+                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="2">
+                            <TextBox Text="{Binding TeamFilter}"
+                                     Watermark="T"
+                                     Width="24" MinHeight="0" MinWidth="0"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     Padding="1,8"
+                                     MaxLength="1" />
+                            <TextBox Text="{Binding PlayerFilter}"
+                                     Watermark="N"
+                                     Width="28" MinHeight="0" MinWidth="0"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     Padding="1,8"
+                                     MaxLength="2" />
+                            <TextBox Text="{Binding SkillFilter}"
+                                     Watermark="S"
+                                     Width="24" MinHeight="0" MinWidth="0"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     Padding="1,8"
+                                     MaxLength="1" />
+                            <TextBox Text="{Binding HitFilter}"
+                                     Watermark="H"
+                                     Width="24" MinHeight="0" MinWidth="0"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     Padding="1,8"
+                                     MaxLength="1" />
+                            <TextBox Text="{Binding EvalFilter}"
+                                     Watermark="E"
+                                     Width="24" MinHeight="0" MinWidth="0"
+                                     FontFamily="Consolas,Courier New,monospace"
+                                     FontSize="12"
+                                     TextAlignment="Center"
+                                     Padding="1,8"
+                                     MaxLength="1" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+        </Grid>
+
+    </Grid>
+</UserControl>

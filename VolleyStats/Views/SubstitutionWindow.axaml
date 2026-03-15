@@ -1,0 +1,105 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewmodels="using:VolleyStats.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.SubstitutionWindow"
+        x:DataType="viewmodels:SubstitutionViewModel"
+        Title="Substitution"
+        Width="360"
+        Height="420"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,12">
+            <TextBlock Text="{Binding TeamLabel}"
+                       FontSize="15" FontWeight="SemiBold" />
+            <TextBlock Text="Select the player going OUT and the player coming IN."
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+        </StackPanel>
+
+        <!-- Two columns: On Court | Bench -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="12">
+
+            <!-- On Court (going OUT) -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0"
+                           Text="On Court"
+                           FontWeight="SemiBold" FontSize="12" />
+                <TextBlock Grid.Row="1"
+                           Text="going OUT"
+                           FontSize="11"
+                           Foreground="#DC2626"
+                           Margin="0,1,0,6" />
+                <Border Grid.Row="2"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <ListBox ItemsSource="{Binding CourtPlayers}"
+                             SelectedItem="{Binding SelectedCourt, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:PlayerPickItem">
+                                <TextBlock Text="{Binding DisplayText}"
+                                           FontSize="13"
+                                           Padding="4,3" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Grid>
+
+            <!-- Bench (coming IN) -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*">
+                <TextBlock Grid.Row="0"
+                           Text="Bench"
+                           FontWeight="SemiBold" FontSize="12" />
+                <TextBlock Grid.Row="1"
+                           Text="coming IN"
+                           FontSize="11"
+                           Foreground="#16A34A"
+                           Margin="0,1,0,6" />
+                <Border Grid.Row="2"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <ListBox ItemsSource="{Binding BenchPlayers}"
+                             SelectedItem="{Binding SelectedBench, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="viewmodels:PlayerPickItem">
+                                <TextBlock Text="{Binding DisplayText}"
+                                           FontSize="13"
+                                           Padding="4,3" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Grid>
+
+        </Grid>
+
+        <!-- Footer buttons -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,12,0,0">
+            <Button Content="Cancel"  Click="CancelButton_OnClick" />
+            <Button Content="Confirm" Click="ConfirmButton_OnClick"
+                    IsEnabled="{Binding CanConfirm}" />
+        </StackPanel>
+
+    </Grid>
+
+</Window>

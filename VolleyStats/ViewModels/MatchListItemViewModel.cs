@@ -1,11 +1,19 @@
 using System;
 using System.Globalization;
-using VolleyStats.Domain;
+using CommunityToolkit.Mvvm.ComponentModel;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {
-    public class MatchListItemViewModel
+    public class MatchListItemViewModel : ObservableObject
     {
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
+
         public MatchListItemViewModel(MatchSummary summary)
         {
             FileName = summary.FileName;

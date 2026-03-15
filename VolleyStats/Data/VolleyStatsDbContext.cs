@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.Data
 {

@@ -1,15 +1,23 @@
-using VolleyStats.Domain;
+using CommunityToolkit.Mvvm.ComponentModel;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {
-    public class CodeViewModel
+    public class CodeViewModel : ObservableObject
     {
         public Code Code { get; }
-        public string Display => Code.RawCode;
+
+        private string _rawCode;
+        public string RawCode
+        {
+            get => _rawCode;
+            set => SetProperty(ref _rawCode, value);
+        }
 
         public CodeViewModel(Code code)
         {
             Code = code;
+            _rawCode = code.RawCode;
         }
     }
 }

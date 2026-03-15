@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewmodels="using:VolleyStats.ViewModels"
+             xmlns:views="using:VolleyStats.Views"
              mc:Ignorable="d"
              x:Class="VolleyStats.Views.MatchDetailView"
              d:DesignWidth="1200"
@@ -13,16 +14,27 @@
 
         <!-- Header -->
         <Border Grid.Row="0"
-                Padding="24,16,24,14"
+                Padding="24,14,24,12"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
-                <Button DockPanel.Dock="Left"
-                        Content="← Back"
-                        Command="{Binding BackCommand}"
-                        Padding="12,7"
-                        Margin="0,0,20,0"
-                        VerticalAlignment="Center" />
+                <!-- Left: Back + Edit buttons -->
+                <StackPanel DockPanel.Dock="Left"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center">
+                    <Button Content="← Back"
+                            Command="{Binding BackCommand}"
+                            Padding="12,7"
+                            VerticalAlignment="Center" />
+                    <Button x:Name="EditInfoButton"
+                            Content="✎ Match Info"
+                            Padding="10,7"
+                            VerticalAlignment="Center"
+                            Click="EditInfoButton_OnClick" />
+                </StackPanel>
+
+                <!-- Right: Score badge -->
                 <Border DockPanel.Dock="Right"
                         Background="#1D4ED8"
                         CornerRadius="8"
@@ -33,32 +45,160 @@
                                FontSize="20"
                                FontWeight="Bold" />
                 </Border>
-                <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="16" VerticalAlignment="Center">
-                    <TextBlock Grid.Column="0"
-                               Text="{Binding HomeTeamName}"
-                               FontSize="18" FontWeight="SemiBold"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="1"
-                               Text="vs" FontSize="14" VerticalAlignment="Center"
-                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding AwayTeamName}"
-                               FontSize="18" FontWeight="SemiBold"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" />
-                </Grid>
+
+                <!-- Center: team names + match info line -->
+                <StackPanel VerticalAlignment="Center" Spacing="2">
+                    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding HomeTeamName}"
+                                   FontSize="17" FontWeight="SemiBold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1"
+                                   Text="vs" FontSize="13" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding AwayTeamName}"
+                                   FontSize="17" FontWeight="SemiBold"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    </Grid>
+                    <TextBlock Text="{Binding MatchInfoText}"
+                               FontSize="11"
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                               IsVisible="{Binding MatchInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- Main content -->
-        <Grid Grid.Row="1" ColumnDefinitions="240,*" ColumnSpacing="0">
+        <Grid Grid.Row="1" ColumnDefinitions="260,*" ColumnSpacing="0">
 
-            <!-- Left column: small court + codes list -->
+            <!-- Left column: set scores + court + action buttons + codes list -->
             <Grid Grid.Column="0"
-                  RowDefinitions="Auto,*"
-                  Margin="16,16,8,16">
+                  RowDefinitions="Auto,Auto,Auto,Auto,*"
+                  Margin="16,12,8,16">
 
-                <!-- Small volleyball court -->
+                <!-- Row 0: Set scores + current set + live score + Start/End Set buttons -->
                 <Border Grid.Row="0"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="8,6"
+                        Margin="0,0,0,6">
+                    <StackPanel Spacing="4">
+                        <!-- Top row: set label + past scores + action button -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding SetManager.CurrentSet, StringFormat='Set {0}'}"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"
+                                       VerticalAlignment="Center" />
+
+                            <ItemsControl Grid.Column="1"
+                                          ItemsSource="{Binding SetManager.SetScores}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="viewmodels:SetScoreItemViewModel">
+                                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                CornerRadius="4"
+                                                Padding="6,3">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding SetNumber, StringFormat='S{0}'}"
+                                                           FontSize="9"
+                                                           HorizontalAlignment="Center"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                <TextBlock Text="{Binding ScoreText}"
+                                                           FontSize="12"
+                                                           FontWeight="Bold"
+                                                           HorizontalAlignment="Center" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                <Button Content="Start Set"
+                                        Command="{Binding SetManager.StartSetCommand}"
+                                        FontSize="11"
+                                        Padding="6,3"
+                                        IsVisible="{Binding SetManager.IsNotActiveSet}" />
+                                <Button Content="End Set"
+                                        Command="{Binding SetManager.EndSetCommand}"
+                                        FontSize="11"
+                                        Padding="6,3"
+                                        IsVisible="{Binding SetManager.IsActiveSet}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Live score row (only when set is active) -->
+                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                CornerRadius="4"
+                                Padding="8,4"
+                                IsVisible="{Binding SetManager.IsActiveSet}"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="*,Auto,*">
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding SetManager.LiveHomeScore}"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Grid.Column="1"
+                                           Text=":"
+                                           FontSize="16"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding SetManager.LiveAwayScore}"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Row 1: Away action buttons (above court) -->
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="*,Auto,*"
+                      ColumnSpacing="4"
+                      Margin="0,0,0,3">
+                    <Button Grid.Column="0"
+                            Command="{Binding SetManager.AwayTimeoutCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            FontSize="11"
+                            Padding="4,5">
+                        <TextBlock>
+                            <Run Text="T.O. " />
+                            <Run Text="{Binding SetManager.AwayTimeoutsLeft}" FontWeight="Bold" />
+                        </TextBlock>
+                    </Button>
+                    <Button Grid.Column="1"
+                            Command="{Binding SetManager.RotateAwayCommand}"
+                            Content="↻"
+                            FontSize="14"
+                            Padding="10,4"
+                            ToolTip.Tip="Rotate away team" />
+                    <Button Grid.Column="2"
+                            Command="{Binding SetManager.AwaySubstitutionCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            FontSize="11"
+                            Padding="4,5">
+                        <TextBlock>
+                            <Run Text="Sub " />
+                            <Run Text="{Binding SetManager.AwaySubstitutionsLeft}" FontWeight="Bold" />
+                        </TextBlock>
+                    </Button>
+                </Grid>
+
+                <!-- Row 2: Small volleyball court -->
+                <Border Grid.Row="2"
                         Height="190"
                         Background="#166534"
                         CornerRadius="6"
@@ -179,8 +319,43 @@
                     </Grid>
                 </Border>
 
-                <!-- Codes list -->
-                <Border Grid.Row="1"
+                <!-- Row 3: Home action buttons (below court) -->
+                <Grid Grid.Row="3"
+                      ColumnDefinitions="*,Auto,*"
+                      ColumnSpacing="4"
+                      Margin="0,3,0,0">
+                    <Button Grid.Column="0"
+                            Command="{Binding SetManager.HomeTimeoutCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            FontSize="11"
+                            Padding="4,5">
+                        <TextBlock>
+                            <Run Text="T.O. " />
+                            <Run Text="{Binding SetManager.HomeTimeoutsLeft}" FontWeight="Bold" />
+                        </TextBlock>
+                    </Button>
+                    <Button Grid.Column="1"
+                            Command="{Binding SetManager.RotateHomeCommand}"
+                            Content="↻"
+                            FontSize="14"
+                            Padding="10,4"
+                            ToolTip.Tip="Rotate home team" />
+                    <Button Grid.Column="2"
+                            Command="{Binding SetManager.HomeSubstitutionCommand}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            FontSize="11"
+                            Padding="4,5">
+                        <TextBlock>
+                            <Run Text="Sub " />
+                            <Run Text="{Binding SetManager.HomeSubstitutionsLeft}" FontWeight="Bold" />
+                        </TextBlock>
+                    </Button>
+                </Grid>
+
+                <!-- Row 4: Codes list -->
+                <Border Grid.Row="4"
                         Margin="0,8,0,0"
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                         BorderThickness="1"
@@ -190,11 +365,22 @@
                                 Padding="12,8"
                                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                 BorderThickness="0,0,0,1">
-                            <TextBlock Text="Scout Codes"
-                                       FontWeight="SemiBold"
-                                       FontSize="13" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Scout Codes"
+                                           FontWeight="SemiBold"
+                                           FontSize="13" />
+                                <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                        CornerRadius="10"
+                                        Padding="7,2"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding CodesCount}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </StackPanel>
                         </Border>
                         <ListBox Grid.Row="1"
+                                 x:Name="CodesList"
                                  ItemsSource="{Binding Codes}"
                                  SelectedItem="{Binding SelectedCode, Mode=TwoWay}"
                                  Background="Transparent"
@@ -202,7 +388,7 @@
                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="viewmodels:CodeViewModel">
-                                    <TextBlock Text="{Binding Display}"
+                                    <TextBlock Text="{Binding RawCode}"
                                                FontFamily="Consolas,Courier New,monospace"
                                                FontSize="12"
                                                Padding="4,2" />
@@ -214,10 +400,10 @@
 
             </Grid>
 
-            <!-- Middle column: input row at top, video below -->
+            <!-- Right column: input row at top, video below -->
             <Grid Grid.Column="1"
                   RowDefinitions="Auto,*"
-                  Margin="8,16,16,16">
+                  Margin="8,12,16,16">
 
                 <!-- Input row: HomeBtn | TextBox | AwayBtn -->
                 <Grid Grid.Row="0"
@@ -226,34 +412,34 @@
                     <Button Grid.Column="0"
                             Content="{Binding HomeTeamName}"
                             Command="{Binding AddHomePointCommand}"
+                            IsEnabled="{Binding SetManager.IsActiveSet}"
                             Background="#1D4ED8"
                             Foreground="White"
                             Padding="18,9"
                             VerticalAlignment="Stretch" />
                     <TextBox Grid.Column="1"
+                             x:Name="ScoutCodeBox"
                              Text="{Binding NewCodeText}"
                              Watermark="Scout code..."
                              VerticalAlignment="Center" />
                     <Button Grid.Column="2"
                             Content="{Binding AwayTeamName}"
                             Command="{Binding AddAwayPointCommand}"
+                            IsEnabled="{Binding SetManager.IsActiveSet}"
                             Background="#166534"
                             Foreground="White"
                             Padding="18,9"
                             VerticalAlignment="Stretch" />
                 </Grid>
 
-                <!-- Video area -->
+                <!-- Video player -->
                 <Border Grid.Row="1"
                         Margin="0,8,0,0"
-                        Background="#111111"
                         CornerRadius="6"
                         ClipToBounds="True">
-                    <TextBlock Text="Video"
-                               Foreground="#555555"
-                               FontSize="18"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
+                    <views:VideoPlayerControl
+                        VideoPath="{Binding VideoSourcePath}"
+                        VideoSeekSeconds="{Binding VideoSeekSeconds}" />
                 </Border>
 
             </Grid>

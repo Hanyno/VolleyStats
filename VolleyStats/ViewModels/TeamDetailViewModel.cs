@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {

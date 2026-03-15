@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 using VolleyStats.ViewModels;
 
 namespace VolleyStats.Views

@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewmodels="using:VolleyStats.ViewModels"
-        xmlns:domain="clr-namespace:VolleyStats.Domain"
+        xmlns:models="clr-namespace:VolleyStats.Models"
         mc:Ignorable="d"
         x:Class="VolleyStats.Views.TeamPickerWindow"
         Title="Vyberte tým"
@@ -24,7 +24,7 @@
             </ListBox.Styles>
 
             <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="domain:Team">
+                <DataTemplate x:DataType="models:Team">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Text="{Binding Name}" />
                         <TextBlock Grid.Column="1"

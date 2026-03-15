@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using System;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 using VolleyStats.ViewModels;
 
 namespace VolleyStats.Views

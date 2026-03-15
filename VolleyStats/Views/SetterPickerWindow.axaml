@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewmodels="using:VolleyStats.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.SetterPickerWindow"
+        x:DataType="viewmodels:SetterPickerViewModel"
+        Title="Choose New Setter"
+        Width="260"
+        SizeToContent="Height"
+        MinHeight="120"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="16" Spacing="10">
+
+        <StackPanel Spacing="2">
+            <TextBlock Text="{Binding TeamLabel}"
+                       FontWeight="SemiBold" FontSize="14" />
+            <TextBlock Text="The setter was substituted. Choose the new setter from players on court."
+                       FontSize="11"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+        </StackPanel>
+
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <ListBox ItemsSource="{Binding CourtPlayers}"
+                     SelectedItem="{Binding Selected, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:PlayerPickItem">
+                        <TextBlock Text="{Binding DisplayText}"
+                                   FontSize="13"
+                                   Padding="4,3" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel"  Click="CancelButton_OnClick" />
+            <Button Content="Confirm" Click="ConfirmButton_OnClick"
+                    IsEnabled="{Binding CanConfirm}" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

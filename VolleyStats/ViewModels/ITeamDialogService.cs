@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {

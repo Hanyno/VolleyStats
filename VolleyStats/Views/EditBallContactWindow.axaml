@@ -1,0 +1,124 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:viewmodels="using:VolleyStats.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.EditBallContactWindow"
+        x:DataType="viewmodels:EditBallContactViewModel"
+        Title="Edit Ball Contact Code"
+        Width="560"
+        SizeToContent="Height"
+        MinHeight="150"
+        MaxHeight="800"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="16" Spacing="12">
+
+        <!-- Code fields in a row -->
+        <StackPanel Orientation="Horizontal" Spacing="6">
+
+            <StackPanel Spacing="3">
+                <TextBlock Text="Team" FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <TextBox x:Name="TeamBox"
+                         Text="{Binding TeamText}"
+                         Width="46"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="20"
+                         TextAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="3">
+                <TextBlock Text="Player" FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <TextBox x:Name="PlayerBox"
+                         Text="{Binding PlayerText}"
+                         Width="56"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="20"
+                         TextAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="3">
+                <TextBlock Text="Skill" FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <TextBox x:Name="SkillBox"
+                         Text="{Binding SkillText}"
+                         Width="46"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="20"
+                         TextAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="3">
+                <TextBlock Text="Hit" FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <TextBox x:Name="HitTypeBox"
+                         Text="{Binding HitTypeText}"
+                         Width="46"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="20"
+                         TextAlignment="Center" />
+            </StackPanel>
+
+            <StackPanel Spacing="3">
+                <TextBlock Text="Eval" FontSize="10"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                <TextBox x:Name="EvalBox"
+                         Text="{Binding EvaluationText}"
+                         Width="46"
+                         FontFamily="Consolas,Courier New,monospace"
+                         FontSize="20"
+                         TextAlignment="Center" />
+            </StackPanel>
+
+        </StackPanel>
+
+        <!-- Options panel -->
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="6">
+            <ListBox x:Name="OptionsList"
+                     ItemsSource="{Binding ActiveOptions}"
+                     SelectedIndex="{Binding SelectedOptionIndex, Mode=TwoWay}"
+                     Background="Transparent"
+                     BorderThickness="0">
+                <ListBox.Styles>
+                    <Style Selector="ListBoxItem">
+                        <Setter Property="Padding" Value="7,3" />
+                        <Setter Property="Margin" Value="2,2" />
+                        <Setter Property="CornerRadius" Value="4" />
+                    </Style>
+                </ListBox.Styles>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="viewmodels:CodeOption">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="{Binding Value}"
+                                       FontFamily="Consolas,Courier New,monospace"
+                                       FontWeight="Bold" />
+                            <TextBlock Text="{Binding Description}"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                       FontSize="12" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" Click="CancelButton_OnClick" />
+            <Button Content="Save" Click="SaveButton_OnClick" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

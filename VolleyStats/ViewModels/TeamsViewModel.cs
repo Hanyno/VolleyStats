@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using VolleyStats.Data.Repositories;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {

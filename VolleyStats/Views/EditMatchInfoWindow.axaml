@@ -1,0 +1,63 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="VolleyStats.Views.EditMatchInfoWindow"
+        Title="Edit Match Info"
+        Width="380"
+        SizeToContent="Height"
+        MinHeight="100"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20" Spacing="14">
+
+        <TextBlock Text="Match Information"
+                   FontSize="15"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,2" />
+
+        <Grid ColumnDefinitions="110,*"
+              RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+              RowSpacing="8">
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Date (yyyy-MM-dd)" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="0" Grid.Column="1" x:Name="DateBox" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Time (HH:mm)" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="1" Grid.Column="1" x:Name="TimeBox" />
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Season" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="2" Grid.Column="1" x:Name="SeasonBox" />
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="League" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="3" Grid.Column="1" x:Name="LeagueBox" />
+
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Phase" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="4" Grid.Column="1" x:Name="PhaseBox" />
+
+            <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                    BorderThickness="0,1,0,0"
+                    Margin="0,2,0,2" />
+
+            <TextBlock Grid.Row="6" Grid.Column="0" Text="City" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="6" Grid.Column="1" x:Name="CityBox" />
+
+            <TextBlock Grid.Row="7" Grid.Column="0" Text="Hall" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="7" Grid.Column="1" x:Name="HallBox" />
+
+            <TextBlock Grid.Row="8" Grid.Column="0" Text="Referees" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="8" Grid.Column="1" x:Name="RefereesBox" />
+
+            <TextBlock Grid.Row="9" Grid.Column="0" Text="Scout" VerticalAlignment="Center" FontSize="12" />
+            <TextBox   Grid.Row="9" Grid.Column="1" x:Name="ScoutBox" />
+
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,4,0,0">
+            <Button Content="Cancel" Click="CancelButton_OnClick" />
+            <Button Content="Save"   Click="SaveButton_OnClick" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

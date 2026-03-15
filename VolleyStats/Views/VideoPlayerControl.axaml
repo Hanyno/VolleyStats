@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="VolleyStats.Views.VideoPlayerControl">
+
+    <Grid RowDefinitions="*, Auto">
+
+        <!-- Video area with drawing overlay -->
+        <Grid Grid.Row="0" Background="#111111">
+            <Image x:Name="VideoImage"
+                   Stretch="Uniform"
+                   IsVisible="False" />
+            <TextBlock x:Name="StatusText"
+                       Text="No video"
+                       Foreground="#555555"
+                       FontSize="16"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+            <Canvas x:Name="DrawingCanvas"
+                    IsHitTestVisible="False"
+                    Background="Transparent"
+                    PointerPressed="DrawingCanvas_PointerPressed"
+                    PointerMoved="DrawingCanvas_PointerMoved"
+                    PointerReleased="DrawingCanvas_PointerReleased" />
+        </Grid>
+
+        <!-- Controls bar -->
+        <Border Grid.Row="1" Background="#1A1A1A" Padding="8,5">
+            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                <Button x:Name="Back2sBtn"
+                        Content="◀◀ 2s"
+                        Width="58"
+                        Click="OnBack2sClick"
+                        ToolTip.Tip="Seek back 2 seconds" />
+                <Button x:Name="FrameBackBtn"
+                        Content="◀|"
+                        Width="38"
+                        Click="OnFrameBackClick"
+                        ToolTip.Tip="Previous frame" />
+                <Button x:Name="PlayPauseBtn"
+                        Content="▶"
+                        Width="38"
+                        Click="OnPlayPauseClick"
+                        ToolTip.Tip="Play / Pause" />
+                <Button x:Name="FrameFwdBtn"
+                        Content="|▶"
+                        Width="38"
+                        Click="OnFrameFwdClick"
+                        ToolTip.Tip="Next frame" />
+                <Button x:Name="Fwd2sBtn"
+                        Content="2s ▶▶"
+                        Width="58"
+                        Click="OnFwd2sClick"
+                        ToolTip.Tip="Seek forward 2 seconds" />
+                <Separator Width="1" Margin="6,2" Background="#444444" />
+                <ToggleButton x:Name="PaintBtn"
+                              Content="✏ Paint"
+                              Width="72"
+                              IsCheckedChanged="OnPaintToggled"
+                              ToolTip.Tip="Toggle drawing mode" />
+                <Button x:Name="ClearBtn"
+                        Content="Clear"
+                        Width="52"
+                        Click="OnClearClick"
+                        IsVisible="False"
+                        ToolTip.Tip="Clear all drawings" />
+            </StackPanel>
+        </Border>
+
+    </Grid>
+
+</UserControl>

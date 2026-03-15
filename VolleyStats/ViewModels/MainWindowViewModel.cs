@@ -10,6 +10,7 @@ namespace VolleyStats.ViewModels
     {
         private readonly MatchSummaryLoader _matchSummaryLoader;
         private readonly TeamsRepository _teamsRepository;
+        private readonly KeyboardShortcutsStore _shortcutsStore = new();
 
         public ObservableCollection<TabItemViewModel> Tabs { get; } = new();
 
@@ -45,24 +46,43 @@ namespace VolleyStats.ViewModels
 
         public async Task AddTabAsync()
         {
-            // Create a placeholder content first so TabItemViewModel can be created
             var placeholder = new HomePageViewModel(_matchSummaryLoader, _teamsRepository);
             var tab = new TabItemViewModel("Home", placeholder, CloseTab);
             Tabs.Add(tab);
             SelectedTab = tab;
 
-            var content = new HomePageViewModel(_matchSummaryLoader, _teamsRepository,
-                async matchItem => await OpenMatchInTab(tab, matchItem));
+            var content = CreateHomeViewModel(tab);
             tab.Content = content;
             await content.InitializeAsync();
+        }
+
+        private HomePageViewModel CreateHomeViewModel(TabItemViewModel tab)
+        {
+            return new HomePageViewModel(
+                _matchSummaryLoader,
+                _teamsRepository,
+                async matchItem => await OpenMatchInTab(tab, matchItem),
+                async () =>
+                {
+                    var settingsVm = new SettingsViewModel(
+                        async () =>
+                        {
+                            var homeVm = CreateHomeViewModel(tab);
+                            tab.Header = "Home";
+                            tab.Content = homeVm;
+                            await homeVm.InitializeAsync();
+                        },
+                        _shortcutsStore);
+                    tab.Header = "Settings";
+                    tab.Content = settingsVm;
+                });
         }
 
         private async Task OpenMatchInTab(TabItemViewModel tab, MatchListItemViewModel matchItem)
         {
             var matchVm = new MatchDetailViewModel(matchItem.FilePath, async () =>
             {
-                var homeVm = new HomePageViewModel(_matchSummaryLoader, _teamsRepository,
-                    async item => await OpenMatchInTab(tab, item));
+                var homeVm = CreateHomeViewModel(tab);
                 tab.Header = "Home";
                 tab.Content = homeVm;
                 await homeVm.InitializeAsync();

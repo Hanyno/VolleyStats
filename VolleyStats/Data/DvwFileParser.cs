@@ -5,7 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 using VolleyStats.Enums;
 
 namespace VolleyStats.Data
@@ -14,7 +14,7 @@ namespace VolleyStats.Data
     {
         /// <summary>
         /// Parses a .dvw file at the given path into a fully populated <see cref="Match"/> object.
-        /// This is the main entry point — implement section dispatching here.
+        /// This is the main entry point ï¿½ implement section dispatching here.
         /// </summary>
         public Match ParseDvwFile(string filePath)
         {
@@ -545,7 +545,7 @@ namespace VolleyStats.Data
                 if (line.StartsWith("[") && line.EndsWith("]"))
                     return string.Empty;
 
-                return line; // kdyby tam náhodou nìco bylo
+                return line; // kdyby tam nï¿½hodou nï¿½co bylo
             }
 
             return string.Empty;
@@ -599,7 +599,7 @@ namespace VolleyStats.Data
             if (sectionIndex < 0)
                 return new List<Code>();
 
-            var result = new List<Code>();
+            var rawLines = new List<string>();
 
             for (int i = sectionIndex + 1; i < lines.Length; i++)
             {
@@ -608,14 +608,13 @@ namespace VolleyStats.Data
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                // konec sekce
                 if (line.StartsWith("[") && line.EndsWith("]"))
                     break;
 
-                result.Add(new Code(line));
+                rawLines.Add(line);
             }
 
-            return result;
+            return CodeClassifier.ParseLines(rawLines).ToList();
         }
 
         private static string? Get(string[] arr, int index)

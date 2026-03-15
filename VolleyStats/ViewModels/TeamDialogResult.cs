@@ -1,4 +1,4 @@
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {

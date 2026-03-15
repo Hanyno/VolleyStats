@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using VolleyStats.Data.Repositories;
-using VolleyStats.Domain;
+using VolleyStats.Models;
 
 namespace VolleyStats.ViewModels
 {

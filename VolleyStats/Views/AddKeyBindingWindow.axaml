@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="VolleyStats.Views.AddKeyBindingWindow"
+        Title="Add Key Binding"
+        Width="420"
+        SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="24" Spacing="12">
+
+        <TextBlock Text="Key"
+                   FontSize="13"
+                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+
+        <TextBox x:Name="KeyCaptureBox"
+                 IsReadOnly="True"
+                 Watermark="Click here and press a key combination..."
+                 FontFamily="Consolas,Courier New,monospace"
+                 FontSize="16" />
+
+        <TextBlock Text="Text to Insert"
+                   FontSize="13"
+                   Margin="0,8,0,0"
+                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+
+        <TextBox x:Name="InsertTextBox"
+                 Watermark="Text that will be typed when the key is pressed"
+                 FontFamily="Consolas,Courier New,monospace"
+                 FontSize="16" />
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,12,0,0">
+            <Button Content="Cancel" Click="CancelButton_OnClick" />
+            <Button Content="Save" Click="SaveButton_OnClick" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

@@ -14,152 +14,158 @@
 
         <!-- Header -->
         <Border Grid.Row="0"
-                Padding="24,14,24,12"
+                Padding="20,12,20,12"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
-                <!-- Left: Back + Edit buttons -->
+
+                <!-- Left: navigation + utility actions -->
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
-                            Spacing="8"
+                            Spacing="4"
                             VerticalAlignment="Center">
                     <Button Content="← Back"
                             Command="{Binding BackCommand}"
                             Padding="12,7"
-                            VerticalAlignment="Center" />
+                            VerticalAlignment="Center"/>
+
+                    <Border Width="1" Height="20"
+                            Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                            Margin="6,0"
+                            VerticalAlignment="Center"/>
+
                     <Button x:Name="EditInfoButton"
-                            Content="✎ Match Info"
+                            Content="Edit Info"
+                            Classes="ghost"
                             Padding="10,7"
                             VerticalAlignment="Center"
-                            Click="EditInfoButton_OnClick" />
-                    <Button Content="💾 Save"
+                            Click="EditInfoButton_OnClick"/>
+                    <Button Content="Save"
+                            Classes="ghost"
                             Command="{Binding SaveCommand}"
                             Padding="10,7"
-                            VerticalAlignment="Center" />
-                    <Button Content="🎬 Video"
+                            VerticalAlignment="Center"/>
+                    <Button Content="Video"
+                            Classes="ghost"
                             Padding="10,7"
                             VerticalAlignment="Center"
-                            Click="ChangeVideoButton_OnClick" />
+                            Click="ChangeVideoButton_OnClick"/>
                 </StackPanel>
 
                 <!-- Right: Score badge -->
                 <Border DockPanel.Dock="Right"
-                        Background="#1D4ED8"
-                        CornerRadius="8"
+                        Background="#2563EB"
+                        CornerRadius="10"
                         Padding="18,6"
                         VerticalAlignment="Center">
                     <TextBlock Text="{Binding ScoreText}"
                                Foreground="White"
                                FontSize="20"
-                               FontWeight="Bold" />
+                               FontWeight="Bold"/>
                 </Border>
 
-                <!-- Center: team names + match info line -->
-                <StackPanel VerticalAlignment="Center" Spacing="2">
-                    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="12">
+                <!-- Center: team names + match info -->
+                <StackPanel VerticalAlignment="Center" Spacing="2" Margin="16,0">
+                    <Grid ColumnDefinitions="*,Auto,*" ColumnSpacing="10">
                         <TextBlock Grid.Column="0"
                                    Text="{Binding HomeTeamName}"
-                                   FontSize="17" FontWeight="SemiBold"
-                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                   FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="1"
-                                   Text="vs" FontSize="13" VerticalAlignment="Center"
-                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                   Text="vs" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                         <TextBlock Grid.Column="2"
                                    Text="{Binding AwayTeamName}"
-                                   FontSize="17" FontWeight="SemiBold"
-                                   HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                   FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center"/>
                     </Grid>
                     <TextBlock Text="{Binding MatchInfoText}"
                                FontSize="11"
                                HorizontalAlignment="Center"
                                Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                               IsVisible="{Binding MatchInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                               IsVisible="{Binding MatchInfoText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                 </StackPanel>
             </DockPanel>
         </Border>
 
         <!-- Main content -->
-        <Grid Grid.Row="1" ColumnDefinitions="260,*" ColumnSpacing="0">
+        <Grid Grid.Row="1" ColumnDefinitions="256,*" ColumnSpacing="0">
 
             <!-- Left column: set scores + court + action buttons + codes list -->
             <Grid Grid.Column="0"
                   RowDefinitions="Auto,Auto,Auto,Auto,*"
-                  Margin="16,12,8,16">
+                  Margin="14,12,8,14">
 
-                <!-- Row 0: Set scores + current set + live score + Start/End Set buttons -->
+                <!-- Row 0: Set scores + live score + End Set -->
                 <Border Grid.Row="0"
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                         BorderThickness="1"
-                        CornerRadius="6"
-                        Padding="8,6"
+                        CornerRadius="10"
+                        Padding="10,8"
                         Margin="0,0,0,6">
-                    <StackPanel Spacing="4">
-                        <!-- Top row: set label + past scores + action button -->
+                    <StackPanel Spacing="5">
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
                             <TextBlock Grid.Column="0"
                                        Text="{Binding SetManager.CurrentSet, StringFormat='Set {0}'}"
                                        FontWeight="SemiBold"
                                        FontSize="12"
-                                       VerticalAlignment="Center" />
+                                       VerticalAlignment="Center"/>
 
                             <ItemsControl Grid.Column="1"
                                           ItemsSource="{Binding SetManager.SetScores}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                                        <StackPanel Orientation="Horizontal" Spacing="4"/>
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="viewmodels:SetScoreItemViewModel">
                                         <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                                                CornerRadius="4"
+                                                CornerRadius="6"
                                                 Padding="6,3">
                                             <StackPanel>
                                                 <TextBlock Text="{Binding SetNumber, StringFormat='S{0}'}"
                                                            FontSize="9"
                                                            HorizontalAlignment="Center"
-                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <TextBlock Text="{Binding ScoreText}"
                                                            FontSize="12"
                                                            FontWeight="Bold"
-                                                           HorizontalAlignment="Center" />
+                                                           HorizontalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                <Button Content="End Set"
-                                        Command="{Binding SetManager.EndSetCommand}"
-                                        FontSize="11"
-                                        Padding="6,3"
-                                        IsVisible="{Binding SetManager.IsActiveSet}" />
-                            </StackPanel>
+                            <Button Grid.Column="2"
+                                    Content="End Set"
+                                    Command="{Binding SetManager.EndSetCommand}"
+                                    Classes="ghost"
+                                    FontSize="11"
+                                    Padding="6,3"
+                                    IsVisible="{Binding SetManager.IsActiveSet}"/>
                         </Grid>
 
-                        <!-- Live score row (only when set is active) -->
+                        <!-- Live score (only when set is active) -->
                         <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                                CornerRadius="4"
-                                Padding="8,4"
-                                IsVisible="{Binding SetManager.IsActiveSet}"
-                                HorizontalAlignment="Stretch">
+                                CornerRadius="8"
+                                Padding="8,5"
+                                IsVisible="{Binding SetManager.IsActiveSet}">
                             <Grid ColumnDefinitions="*,Auto,*">
                                 <TextBlock Grid.Column="0"
                                            Text="{Binding SetManager.LiveHomeScore}"
-                                           FontSize="20"
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Center" />
+                                           FontSize="22" FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
                                 <TextBlock Grid.Column="1"
                                            Text=":"
                                            FontSize="16"
                                            VerticalAlignment="Center"
-                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding SetManager.LiveAwayScore}"
-                                           FontSize="20"
-                                           FontWeight="Bold"
-                                           HorizontalAlignment="Center" />
+                                           FontSize="22" FontWeight="Bold"
+                                           HorizontalAlignment="Center"/>
                             </Grid>
                         </Border>
                     </StackPanel>
@@ -177,16 +183,17 @@
                             FontSize="11"
                             Padding="4,5">
                         <TextBlock>
-                            <Run Text="T.O. " />
-                            <Run Text="{Binding SetManager.AwayTimeoutsLeft}" FontWeight="Bold" />
+                            <Run Text="T.O. "/>
+                            <Run Text="{Binding SetManager.AwayTimeoutsLeft}" FontWeight="Bold"/>
                         </TextBlock>
                     </Button>
                     <Button Grid.Column="1"
                             Command="{Binding SetManager.RotateAwayCommand}"
+                            Classes="ghost"
                             Content="↻"
                             FontSize="14"
                             Padding="10,4"
-                            ToolTip.Tip="Rotate away team" />
+                            ToolTip.Tip="Rotate away team"/>
                     <Button Grid.Column="2"
                             Command="{Binding SetManager.AwaySubstitutionCommand}"
                             HorizontalAlignment="Stretch"
@@ -194,202 +201,195 @@
                             FontSize="11"
                             Padding="4,5">
                         <TextBlock>
-                            <Run Text="Sub " />
-                            <Run Text="{Binding SetManager.AwaySubstitutionsLeft}" FontWeight="Bold" />
+                            <Run Text="Sub "/>
+                            <Run Text="{Binding SetManager.AwaySubstitutionsLeft}" FontWeight="Bold"/>
                         </TextBlock>
                     </Button>
                 </Grid>
 
-                <!-- Row 2: Serving indicator (away) + Court + Serving indicator (home) -->
+                <!-- Row 2: Serving indicator + Court + Serving indicator -->
                 <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto">
 
-                    <!-- Away serving ball (left, above zone 1) -->
+                    <!-- Away serving ball -->
                     <Button Grid.Row="0"
                             Command="{Binding SetManager.ToggleServingCommand}"
                             HorizontalAlignment="Left"
-                            Background="Transparent"
-                            BorderThickness="0"
+                            Classes="ghost"
                             Padding="0"
                             Margin="12,0,0,1"
                             Cursor="Hand"
                             IsVisible="{Binding SetManager.IsActiveSet}">
                         <Panel Width="16" Height="16">
-                            <Ellipse Width="14" Height="14"
+                            <Ellipse Width="13" Height="13"
                                      Fill="#FBBF24"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     IsVisible="{Binding SetManager.IsAwayServing}" />
-                            <Ellipse Width="14" Height="14"
+                                     IsVisible="{Binding SetManager.IsAwayServing}"/>
+                            <Ellipse Width="13" Height="13"
                                      Stroke="#FBBF24" StrokeThickness="2"
                                      Fill="Transparent"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     IsVisible="{Binding SetManager.IsHomeServing}" />
+                                     IsVisible="{Binding SetManager.IsHomeServing}"/>
                         </Panel>
                     </Button>
 
                     <!-- Court -->
                     <Border Grid.Row="1"
-                            Height="190"
+                            Height="192"
                             Background="#166534"
-                            CornerRadius="6"
+                            CornerRadius="10"
                             ClipToBounds="True">
                         <Panel>
 
-                            <!-- Start Set button (when no active set) -->
+                            <!-- Start Set button -->
                             <Button Content="▶  Start Set"
                                     IsVisible="{Binding SetManager.IsNotActiveSet}"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    FontSize="16"
+                                    FontSize="15"
                                     FontWeight="SemiBold"
-                                    Padding="24,12"
-                                    Click="StartSetButton_OnClick" />
+                                    Padding="22,11"
+                                    Click="StartSetButton_OnClick"/>
 
-                            <!-- Court positions (when active set) -->
+                            <!-- Court positions -->
                             <Grid RowDefinitions="*,2,*"
                                   IsVisible="{Binding SetManager.IsActiveSet}">
 
                                 <!-- Away half -->
                                 <Grid Grid.Row="0">
                                     <Grid RowDefinitions="*,*" Margin="8,6,8,4">
-                                        <!-- Away back row: 1, 6, 5 -->
                                         <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
                                             <Border Grid.Column="0" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos1}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="1" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos6}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="2" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos5}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </Grid>
-                                        <!-- Away front row: 2, 3, 4 -->
                                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
                                             <Border Grid.Column="0" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos2}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="1" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos3}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="2" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#0D4F27" BorderBrush="#4ADE80" BorderThickness="2">
                                                 <TextBlock Text="{Binding AwayPos4}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </Grid>
                                     </Grid>
                                 </Grid>
 
                                 <!-- Net -->
-                                <Border Grid.Row="1" Background="White" Opacity="0.7" />
+                                <Border Grid.Row="1" Background="White" Opacity="0.6"/>
 
                                 <!-- Home half -->
                                 <Grid Grid.Row="2">
                                     <Grid RowDefinitions="*,*" Margin="8,4,8,6">
-                                        <!-- Home front row: 4, 3, 2 -->
                                         <Grid Grid.Row="0" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
                                             <Border Grid.Column="0" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos4}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="1" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos3}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="2" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos2}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </Grid>
-                                        <!-- Home back row: 5, 6, 1 -->
                                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*" VerticalAlignment="Center">
                                             <Border Grid.Column="0" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos5}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="1" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos6}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <Border Grid.Column="2" HorizontalAlignment="Center"
                                                     Width="32" Height="32" CornerRadius="16"
                                                     Background="#1E3A5F" BorderBrush="#60A5FA" BorderThickness="2">
                                                 <TextBlock Text="{Binding HomePos1}" Foreground="White"
                                                            FontWeight="Bold" FontSize="13"
-                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                         </Grid>
                                     </Grid>
                                 </Grid>
 
                             </Grid>
-
                         </Panel>
                     </Border>
 
-                    <!-- Home serving ball (right, below zone 1) -->
+                    <!-- Home serving ball -->
                     <Button Grid.Row="2"
                             Command="{Binding SetManager.ToggleServingCommand}"
                             HorizontalAlignment="Right"
-                            Background="Transparent"
-                            BorderThickness="0"
+                            Classes="ghost"
                             Padding="0"
                             Margin="0,1,12,0"
                             Cursor="Hand"
                             IsVisible="{Binding SetManager.IsActiveSet}">
                         <Panel Width="16" Height="16">
-                            <Ellipse Width="14" Height="14"
+                            <Ellipse Width="13" Height="13"
                                      Fill="#FBBF24"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     IsVisible="{Binding SetManager.IsHomeServing}" />
-                            <Ellipse Width="14" Height="14"
+                                     IsVisible="{Binding SetManager.IsHomeServing}"/>
+                            <Ellipse Width="13" Height="13"
                                      Stroke="#FBBF24" StrokeThickness="2"
                                      Fill="Transparent"
                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     IsVisible="{Binding SetManager.IsAwayServing}" />
+                                     IsVisible="{Binding SetManager.IsAwayServing}"/>
                         </Panel>
                     </Button>
 
                 </Grid>
 
-                <!-- Row 3: Home action buttons (below court) -->
+                <!-- Row 3: Home action buttons -->
                 <Grid Grid.Row="3"
                       ColumnDefinitions="*,Auto,*"
                       ColumnSpacing="4"
@@ -401,16 +401,17 @@
                             FontSize="11"
                             Padding="4,5">
                         <TextBlock>
-                            <Run Text="T.O. " />
-                            <Run Text="{Binding SetManager.HomeTimeoutsLeft}" FontWeight="Bold" />
+                            <Run Text="T.O. "/>
+                            <Run Text="{Binding SetManager.HomeTimeoutsLeft}" FontWeight="Bold"/>
                         </TextBlock>
                     </Button>
                     <Button Grid.Column="1"
                             Command="{Binding SetManager.RotateHomeCommand}"
+                            Classes="ghost"
                             Content="↻"
                             FontSize="14"
                             Padding="10,4"
-                            ToolTip.Tip="Rotate home team" />
+                            ToolTip.Tip="Rotate home team"/>
                     <Button Grid.Column="2"
                             Command="{Binding SetManager.HomeSubstitutionCommand}"
                             HorizontalAlignment="Stretch"
@@ -418,8 +419,8 @@
                             FontSize="11"
                             Padding="4,5">
                         <TextBlock>
-                            <Run Text="Sub " />
-                            <Run Text="{Binding SetManager.HomeSubstitutionsLeft}" FontWeight="Bold" />
+                            <Run Text="Sub "/>
+                            <Run Text="{Binding SetManager.HomeSubstitutionsLeft}" FontWeight="Bold"/>
                         </TextBlock>
                     </Button>
                 </Grid>
@@ -429,23 +430,23 @@
                         Margin="0,8,0,0"
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                         BorderThickness="1"
-                        CornerRadius="6">
+                        CornerRadius="10">
                     <Grid RowDefinitions="Auto,*">
                         <Border Grid.Row="0"
-                                Padding="12,8"
+                                Padding="12,9"
                                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                 BorderThickness="0,0,0,1">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="Scout Codes"
                                            FontWeight="SemiBold"
-                                           FontSize="13" />
+                                           FontSize="13"/>
                                 <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                         CornerRadius="10"
                                         Padding="7,2"
                                         VerticalAlignment="Center">
                                     <TextBlock Text="{Binding CodesCount}"
                                                FontSize="11"
-                                               FontWeight="SemiBold" />
+                                               FontWeight="SemiBold"/>
                                 </Border>
                             </StackPanel>
                         </Border>
@@ -461,7 +462,7 @@
                                     <TextBlock Text="{Binding RawCode}"
                                                FontFamily="Consolas,Courier New,monospace"
                                                FontSize="12"
-                                               Padding="4,2" />
+                                               Padding="6,3"/>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
@@ -470,10 +471,10 @@
 
             </Grid>
 
-            <!-- Right column: input row at top, video below -->
+            <!-- Right column: input row + video -->
             <Grid Grid.Column="1"
                   RowDefinitions="Auto,*"
-                  Margin="8,12,16,16">
+                  Margin="8,12,14,14">
 
                 <!-- Input row: HomeBtn | TextBox | AwayBtn -->
                 <Grid Grid.Row="0"
@@ -483,32 +484,29 @@
                             Content="{Binding HomeTeamName}"
                             Command="{Binding AddHomePointCommand}"
                             IsEnabled="{Binding SetManager.IsActiveSet}"
-                            Background="#1D4ED8"
-                            Foreground="White"
-                            Padding="18,9"
-                            VerticalAlignment="Stretch" />
+                            Classes="team-home"
+                            Padding="16,9"
+                            VerticalAlignment="Stretch"/>
                     <TextBox Grid.Column="1"
                              x:Name="ScoutCodeBox"
                              Text="{Binding NewCodeText}"
                              Watermark="Scout code..."
-                             VerticalAlignment="Center" />
+                             VerticalAlignment="Center"/>
                     <Button Grid.Column="2"
                             Content="{Binding AwayTeamName}"
                             Command="{Binding AddAwayPointCommand}"
                             IsEnabled="{Binding SetManager.IsActiveSet}"
-                            Background="#166534"
-                            Foreground="White"
-                            Padding="18,9"
-                            VerticalAlignment="Stretch" />
+                            Classes="team-away"
+                            Padding="16,9"
+                            VerticalAlignment="Stretch"/>
                 </Grid>
 
                 <!-- Video player -->
                 <Border Grid.Row="1"
                         Margin="0,8,0,0"
-                        CornerRadius="6"
+                        CornerRadius="10"
                         ClipToBounds="True">
-                    <views:VideoPlayerControl
-                        x:Name="VideoPlayer" />
+                    <views:VideoPlayerControl x:Name="VideoPlayer"/>
                 </Border>
 
             </Grid>

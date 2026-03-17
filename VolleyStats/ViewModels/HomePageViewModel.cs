@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
@@ -14,8 +15,11 @@ namespace VolleyStats.ViewModels
 {
     public partial class HomePageViewModel : ViewModelBase
     {
+        public const string NewSeasonSentinel = "+ New Season";
+
         private readonly MatchSummaryLoader _matchSummaryLoader;
         private readonly TeamsRepository _teamsRepository;
+        private readonly AppSettingsStore _appSettingsStore = new();
         private readonly Func<MatchListItemViewModel, Task>? _openMatch;
         private readonly Func<Task>? _openSettings;
         private List<Team> _teamsCache = new();
@@ -29,8 +33,16 @@ namespace VolleyStats.ViewModels
             get => _selectedSeason;
             set
             {
+                if (value == NewSeasonSentinel)
+                {
+                    // Revert the ComboBox to the current season, then open dialog
+                    OnPropertyChanged(nameof(SelectedSeason));
+                    _ = HandleNewSeasonAsync();
+                    return;
+                }
                 if (SetProperty(ref _selectedSeason, value))
                 {
+                    _appSettingsStore.SaveLastSeason(value);
                     _ = LoadMatchesAsync();
                 }
             }
@@ -75,6 +87,11 @@ namespace VolleyStats.ViewModels
         }
 
         /// <summary>
+        /// Delegate set by the view to show the new-season dialog. Returns entered name or null.
+        /// </summary>
+        public Func<Task<string?>>? TriggerNewSeasonDialog { get; set; }
+
+        /// <summary>
         /// Delegate set by the view to show a team choice dialog.
         /// Parameters: (display1, value1, display2, value2). Returns chosen value or null.
         /// </summary>
@@ -85,8 +102,21 @@ namespace VolleyStats.ViewModels
         /// </summary>
         public Func<IReadOnlyList<string>, string, Task>? OpenAnalysis { get; set; }
 
+        private bool _sortDescending = true;
+        public bool SortDescending
+        {
+            get => _sortDescending;
+            private set
+            {
+                if (SetProperty(ref _sortDescending, value))
+                    OnPropertyChanged(nameof(SortButtonText));
+            }
+        }
+        public string SortButtonText => _sortDescending ? "↓ Newest" : "↑ Oldest";
+
         public IAsyncRelayCommand LoadMatchesCommand { get; }
         public IRelayCommand ClearTeamFilterCommand { get; }
+        public IRelayCommand ToggleSortCommand { get; }
         public IAsyncRelayCommand<MatchListItemViewModel> OpenMatchCommand { get; }
         public IAsyncRelayCommand OpenSettingsCommand { get; }
         public IAsyncRelayCommand AnalyzeCommand { get; }
@@ -102,6 +132,11 @@ namespace VolleyStats.ViewModels
 
             LoadMatchesCommand = new AsyncRelayCommand(LoadMatchesAsync);
             ClearTeamFilterCommand = new RelayCommand(ClearTeamFilter);
+            ToggleSortCommand = new RelayCommand(() =>
+            {
+                SortDescending = !SortDescending;
+                _ = LoadMatchesAsync();
+            });
             OpenMatchCommand = new AsyncRelayCommand<MatchListItemViewModel>(OpenMatchAsync);
             OpenSettingsCommand = new AsyncRelayCommand(OpenSettingsAsync);
             AnalyzeCommand = new AsyncRelayCommand(AnalyzeAsync, () => HasSelectedMatches);
@@ -269,10 +304,36 @@ namespace VolleyStats.ViewModels
                 AvailableSeasons.Add(season);
             }
 
+            AvailableSeasons.Add(NewSeasonSentinel);
+
             if (string.IsNullOrWhiteSpace(SelectedSeason))
             {
-                SelectedSeason = AvailableSeasons.FirstOrDefault();
+                var saved = _appSettingsStore.LoadLastSeason();
+                SelectedSeason = (!string.IsNullOrWhiteSpace(saved) && AvailableSeasons.Contains(saved))
+                    ? saved
+                    : AvailableSeasons.FirstOrDefault(s => s != NewSeasonSentinel);
             }
+        }
+
+        private async Task HandleNewSeasonAsync()
+        {
+            if (TriggerNewSeasonDialog == null) return;
+            var name = await TriggerNewSeasonDialog();
+            if (string.IsNullOrWhiteSpace(name)) return;
+            await CreateSeasonAsync(name);
+        }
+
+        public async Task CreateSeasonAsync(string name)
+        {
+            var root = Path.Combine(AppContext.BaseDirectory, "Seasons");
+            var seasonPath = Path.Combine(root, name);
+            Directory.CreateDirectory(Path.Combine(seasonPath, "Data"));
+            Directory.CreateDirectory(Path.Combine(seasonPath, "Matches"));
+
+            await Task.Yield(); // ensure UI thread is not blocked during directory creation
+
+            LoadSeasons();
+            SelectedSeason = name;
         }
 
         public async Task LoadMatchesAsync()
@@ -286,7 +347,7 @@ namespace VolleyStats.ViewModels
 
             // When two-team filter is active, load without filter and apply locally
             var loaderFilter = _secondTeamFilter != null ? null : TeamFilter;
-            var summaries = await _matchSummaryLoader.LoadMatchesAsync(SelectedSeason, loaderFilter, _teamsCache);
+            var summaries = await _matchSummaryLoader.LoadMatchesAsync(SelectedSeason, loaderFilter, _teamsCache, _sortDescending);
 
             await ImportMissingTeamsAsync(summaries);
 

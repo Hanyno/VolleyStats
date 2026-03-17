@@ -64,6 +64,69 @@ namespace VolleyStats.Data
         }
 
         /// <summary>
+        /// Replaces the [3VIDEO] section in the given DVW file with the provided paths,
+        /// preserving all other sections.
+        /// </summary>
+        public void SaveVideoPaths(string filePath, IReadOnlyList<string> paths)
+        {
+            var encoding = Encoding.GetEncoding("Windows-1250");
+            var lines = File.ReadAllLines(filePath, encoding);
+            var output = new List<string>();
+
+            int videoStart = Array.FindIndex(lines, l =>
+                l != null && l.Trim().Equals("[3VIDEO]", StringComparison.OrdinalIgnoreCase));
+
+            if (videoStart < 0)
+            {
+                // No [3VIDEO] section yet — insert before [3SCOUT] if present, otherwise append
+                int scoutStart = Array.FindIndex(lines, l =>
+                    l != null && l.Trim().Equals("[3SCOUT]", StringComparison.OrdinalIgnoreCase));
+
+                if (scoutStart >= 0)
+                {
+                    for (int i = 0; i < scoutStart; i++)
+                        output.Add(lines[i]);
+                    output.Add("[3VIDEO]");
+                    for (int i = 0; i < paths.Count; i++)
+                        output.Add($"Camera{i}={paths[i]}");
+                    for (int i = scoutStart; i < lines.Length; i++)
+                        output.Add(lines[i]);
+                }
+                else
+                {
+                    output.AddRange(lines);
+                    output.Add("[3VIDEO]");
+                    for (int i = 0; i < paths.Count; i++)
+                        output.Add($"Camera{i}={paths[i]}");
+                }
+            }
+            else
+            {
+                // Copy everything up to and including [3VIDEO]
+                for (int i = 0; i <= videoStart; i++)
+                    output.Add(lines[i]);
+
+                // Write new video paths
+                for (int i = 0; i < paths.Count; i++)
+                    output.Add($"Camera{i}={paths[i]}");
+
+                // Skip old video entries, find the next section
+                for (int i = videoStart + 1; i < lines.Length; i++)
+                {
+                    var trimmed = (lines[i] ?? "").Trim();
+                    if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                    {
+                        for (int j = i; j < lines.Length; j++)
+                            output.Add(lines[j]);
+                        break;
+                    }
+                }
+            }
+
+            File.WriteAllLines(filePath, output, encoding);
+        }
+
+        /// <summary>
         /// Parses a .dvw file at the given path into a fully populated <see cref="Match"/> object.
         /// This is the main entry point — implement section dispatching here.
         /// </summary>

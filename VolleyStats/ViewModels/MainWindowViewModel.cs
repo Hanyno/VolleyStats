@@ -83,17 +83,38 @@ namespace VolleyStats.ViewModels
 
         private async Task OpenAnalysisInTab(TabItemViewModel tab, IReadOnlyList<string> matchFilePaths, string analysisTeam)
         {
-            var analysisVm = new AnalysisViewModel(matchFilePaths, analysisTeam, async () =>
-            {
-                var homeVm = CreateHomeViewModel(tab);
-                tab.Header = "Home";
-                tab.Content = homeVm;
-                await homeVm.InitializeAsync();
-            });
+            var hubVm = new AnalysisViewModel(
+                matchFilePaths,
+                analysisTeam,
+                async () =>
+                {
+                    var homeVm = CreateHomeViewModel(tab);
+                    tab.Header = "Home";
+                    tab.Content = homeVm;
+                    await homeVm.InitializeAsync();
+                },
+                async () =>
+                {
+                    var videoVm = new VideoAnalysisViewModel(matchFilePaths, analysisTeam, async () =>
+                    {
+                        await OpenAnalysisInTab(tab, matchFilePaths, analysisTeam);
+                    });
+                    tab.Header = $"Video Analysis: {analysisTeam}";
+                    tab.Content = videoVm;
+                    await videoVm.InitializeAsync();
+                },
+                async () =>
+                {
+                    var dataVm = new DataAnalysisViewModel(matchFilePaths, analysisTeam, async () =>
+                    {
+                        await OpenAnalysisInTab(tab, matchFilePaths, analysisTeam);
+                    });
+                    tab.Header = $"Data Analysis: {analysisTeam}";
+                    tab.Content = dataVm;
+                });
 
             tab.Header = $"Analysis: {analysisTeam}";
-            tab.Content = analysisVm;
-            await analysisVm.InitializeAsync();
+            tab.Content = hubVm;
         }
 
         private async Task OpenMatchInTab(TabItemViewModel tab, MatchListItemViewModel matchItem)

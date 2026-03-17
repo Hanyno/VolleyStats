@@ -34,15 +34,15 @@ namespace VolleyStats.Data
                 .ToList();
         }
 
-        public async Task<IReadOnlyList<MatchSummary>> LoadMatchesAsync(string? season, string? teamFilter, IReadOnlyCollection<Team>? knownTeams = null, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<MatchSummary>> LoadMatchesAsync(string? season, string? teamFilter, IReadOnlyCollection<Team>? knownTeams = null, bool sortDescending = true, CancellationToken cancellationToken = default)
         {
             var seasonPath = ResolveSeasonPath(season, out var resolvedSeasonName);
             if (string.IsNullOrWhiteSpace(seasonPath))
-                return GetSampleMatches(resolvedSeasonName ?? season);
+                return Array.Empty<MatchSummary>();
 
             var matchesDir = Path.Combine(seasonPath, "Matches");
             if (!Directory.Exists(matchesDir))
-                return GetSampleMatches(resolvedSeasonName);
+                return Array.Empty<MatchSummary>();
 
             var result = new List<MatchSummary>();
             var files = Directory.EnumerateFiles(matchesDir, "*.dvw", SearchOption.TopDirectoryOnly);
@@ -60,60 +60,18 @@ namespace VolleyStats.Data
                 result.Add(summary);
             }
 
-            if (result.Count == 0)
-                return GetSampleMatches(resolvedSeasonName);
+            if (sortDescending)
+                return result
+                    .OrderByDescending(m => m.Date ?? DateOnly.MinValue)
+                    .ThenByDescending(m => m.Time ?? TimeOnly.MinValue)
+                    .ThenBy(m => m.FileName)
+                    .ToList();
 
             return result
-                .OrderByDescending(m => m.Date ?? DateOnly.MinValue)
-                .ThenByDescending(m => m.Time ?? TimeOnly.MinValue)
+                .OrderBy(m => m.Date ?? DateOnly.MaxValue)
+                .ThenBy(m => m.Time ?? TimeOnly.MaxValue)
                 .ThenBy(m => m.FileName)
                 .ToList();
-        }
-
-        private static IReadOnlyList<MatchSummary> GetSampleMatches(string? seasonName)
-        {
-            var season = string.IsNullOrWhiteSpace(seasonName) ? "Testovací sezóna" : seasonName;
-
-            return new List<MatchSummary>
-            {
-                new()
-                {
-                    Season = season,
-                    League = "Extraliga",
-                    Phase = "Základní část",
-                    Date = new DateOnly(2024, 10, 5),
-
-                    Time = new TimeOnly(18, 0),
-                    HomeTeam = "VK Dukla Liberec",
-                    HomeSets = 3,
-                    AwayTeam = "VK Lvi Praha",
-                    AwaySets = 2
-                },
-                new()
-                {
-                    Season = season,
-                    League = "1. liga",
-                    Phase = "Play-off",
-                    Date = new DateOnly(2024, 3, 22),
-                    Time = new TimeOnly(19, 30),
-                    HomeTeam = "SKV Ústí nad Labem",
-                    HomeSets = 1,
-                    AwayTeam = "Aero Odolena Voda",
-                    AwaySets = 3
-                },
-                new()
-                {
-                    Season = season,
-                    League = "Extraliga",
-                    Phase = "Baráž",
-                    Date = new DateOnly(2024, 4, 10),
-                    Time = new TimeOnly(17, 15),
-                    HomeTeam = "ČEZ Karlovarsko",
-                    HomeSets = 0,
-                    AwayTeam = "VK Ostrava",
-                    AwaySets = 3
-                }
-            };
         }
 
         private static string? ResolveSeasonPath(string? season, out string? resolvedSeasonName)

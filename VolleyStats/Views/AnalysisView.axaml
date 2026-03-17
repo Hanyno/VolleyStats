@@ -3,177 +3,199 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewmodels="using:VolleyStats.ViewModels"
-             xmlns:views="using:VolleyStats.Views"
              mc:Ignorable="d"
              x:Class="VolleyStats.Views.AnalysisView"
-             d:DesignWidth="1200"
-             d:DesignHeight="800"
+             d:DesignWidth="1100"
+             d:DesignHeight="700"
              x:DataType="viewmodels:AnalysisViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Button.analysis-card">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Button.analysis-card:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.analysis-card:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.analysis-card:pointerover Border.card">
+            <Setter Property="RenderTransform" Value="translateY(-3px)" />
+        </Style>
+    </UserControl.Styles>
 
     <Grid RowDefinitions="Auto,*">
 
         <!-- Header -->
         <Border Grid.Row="0"
-                Padding="24,14,24,12"
+                Padding="28,16,28,14"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
+                <Button DockPanel.Dock="Left"
+                        Content="← Back"
+                        Command="{Binding BackCommand}"
+                        Padding="12,7"
+                        VerticalAlignment="Center" />
                 <StackPanel DockPanel.Dock="Left"
-                            Orientation="Horizontal"
-                            Spacing="8"
+                            Margin="16,0,0,0"
                             VerticalAlignment="Center">
-                    <Button Content="← Back"
-                            Command="{Binding BackCommand}"
-                            Padding="12,7" />
-                    <TextBlock Text="{Binding AnalysisTeam}"
-                               FontSize="17" FontWeight="SemiBold"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-
-                <!-- Before / After seconds -->
-                <StackPanel DockPanel.Dock="Right"
-                            Orientation="Horizontal"
-                            Spacing="12"
-                            VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <TextBlock Text="Before:" VerticalAlignment="Center" FontSize="12" />
-                        <Button Content="-" Command="{Binding DecrementBeforeCommand}"
-                                Padding="6,3" FontSize="12" />
-                        <TextBlock Text="{Binding SecondsBefore, StringFormat='{}{0}s'}"
-                                   VerticalAlignment="Center" FontWeight="Bold" FontSize="13" MinWidth="24"
-                                   TextAlignment="Center" />
-                        <Button Content="+" Command="{Binding IncrementBeforeCommand}"
-                                Padding="6,3" FontSize="12" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <TextBlock Text="After:" VerticalAlignment="Center" FontSize="12" />
-                        <Button Content="-" Command="{Binding DecrementAfterCommand}"
-                                Padding="6,3" FontSize="12" />
-                        <TextBlock Text="{Binding SecondsAfter, StringFormat='{}{0}s'}"
-                                   VerticalAlignment="Center" FontWeight="Bold" FontSize="13" MinWidth="24"
-                                   TextAlignment="Center" />
-                        <Button Content="+" Command="{Binding IncrementAfterCommand}"
-                                Padding="6,3" FontSize="12" />
+                    <TextBlock Text="Analysis"
+                               FontSize="18"
+                               FontWeight="Bold" />
+                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding AnalysisTeam}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                        <TextBlock Text="·"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                        <TextBlock Text="{Binding MatchCount, StringFormat='{}{0} match(es)'}"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
                 </StackPanel>
-
-                <Panel />
             </DockPanel>
         </Border>
 
-        <!-- Main content -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,280" ColumnSpacing="0">
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="48,48,48,48"
+                        MaxWidth="860"
+                        HorizontalAlignment="Center"
+                        Spacing="0">
 
-            <!-- Left: Video player -->
-            <Border Grid.Column="0"
-                    Margin="16,12,8,16"
-                    CornerRadius="6"
-                    ClipToBounds="True">
-                <views:VideoPlayerControl x:Name="VideoPlayer" PauseOnLoad="False" />
-            </Border>
+                <!-- Section label -->
+                <TextBlock Text="Choose analysis type"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                           Margin="0,0,0,20"
+                           LetterSpacing="1" />
 
-            <!-- Right: Filters + codes list -->
-            <Border Grid.Column="1"
-                    Margin="8,12,16,16"
-                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                    BorderThickness="1"
-                    CornerRadius="6">
-                <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Cards row -->
+                <WrapPanel Orientation="Horizontal">
 
-                    <!-- Codes header -->
-                    <Border Grid.Row="0"
-                            Padding="10,6"
-                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                            BorderThickness="0,0,0,1">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="Codes"
-                                       FontWeight="SemiBold"
-                                       FontSize="13" />
-                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                                    CornerRadius="10"
-                                    Padding="7,2"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding FilteredCodes.Count}"
-                                           FontSize="11"
-                                           FontWeight="SemiBold" />
-                            </Border>
-                        </StackPanel>
-                    </Border>
+                    <!-- Video Analysis card -->
+                    <Button Classes="analysis-card"
+                            Command="{Binding OpenVideoAnalysisCommand}"
+                            Margin="0,0,20,20"
+                            Width="340">
+                        <Border Classes="card"
+                                CornerRadius="14"
+                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                BorderThickness="1"
+                                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                Padding="28,26">
+                            <StackPanel Spacing="0">
 
-                    <!-- Codes list -->
-                    <ListBox Grid.Row="1"
-                             x:Name="CodesList"
-                             ItemsSource="{Binding FilteredCodes}"
-                             SelectedItem="{Binding SelectedCode, Mode=TwoWay}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="viewmodels:AnalysisCodeItem">
-                                <StackPanel Spacing="1" Margin="4,2">
-                                    <TextBlock Text="{Binding DisplayCode}"
-                                               FontFamily="Consolas,Courier New,monospace"
-                                               FontSize="13" />
-                                    <TextBlock Text="{Binding MatchLabel}"
-                                               FontSize="10"
-                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                                <!-- Icon circle -->
+                                <Border Width="52" Height="52"
+                                        CornerRadius="26"
+                                        Background="#1D4ED8"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,18">
+                                    <TextBlock Text="▶"
+                                               FontSize="20"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Margin="3,0,0,0" />
+                                </Border>
 
-                    <!-- Filter textboxes -->
-                    <Border Grid.Row="2"
-                            Padding="3,2"
-                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                            BorderThickness="0,1,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="2">
-                            <TextBox Text="{Binding TeamFilter}"
-                                     Watermark="T"
-                                     Width="24" MinHeight="0" MinWidth="0"
-                                     FontFamily="Consolas,Courier New,monospace"
-                                     FontSize="12"
-                                     TextAlignment="Center"
-                                     Padding="1,8"
-                                     MaxLength="1" />
-                            <TextBox Text="{Binding PlayerFilter}"
-                                     Watermark="N"
-                                     Width="28" MinHeight="0" MinWidth="0"
-                                     FontFamily="Consolas,Courier New,monospace"
-                                     FontSize="12"
-                                     TextAlignment="Center"
-                                     Padding="1,8"
-                                     MaxLength="2" />
-                            <TextBox Text="{Binding SkillFilter}"
-                                     Watermark="S"
-                                     Width="24" MinHeight="0" MinWidth="0"
-                                     FontFamily="Consolas,Courier New,monospace"
-                                     FontSize="12"
-                                     TextAlignment="Center"
-                                     Padding="1,8"
-                                     MaxLength="1" />
-                            <TextBox Text="{Binding HitFilter}"
-                                     Watermark="H"
-                                     Width="24" MinHeight="0" MinWidth="0"
-                                     FontFamily="Consolas,Courier New,monospace"
-                                     FontSize="12"
-                                     TextAlignment="Center"
-                                     Padding="1,8"
-                                     MaxLength="1" />
-                            <TextBox Text="{Binding EvalFilter}"
-                                     Watermark="E"
-                                     Width="24" MinHeight="0" MinWidth="0"
-                                     FontFamily="Consolas,Courier New,monospace"
-                                     FontSize="12"
-                                     TextAlignment="Center"
-                                     Padding="1,8"
-                                     MaxLength="1" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
+                                <TextBlock Text="Video Analysis"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,8" />
 
-        </Grid>
+                                <TextBlock Text="Watch synchronized match footage with scout codes. Filter by player, skill, and evaluation."
+                                           FontSize="13"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                           Margin="0,0,0,22" />
+
+                                <Border Background="#1D4ED8"
+                                        CornerRadius="8"
+                                        Padding="16,9"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="Open"
+                                               Foreground="White"
+                                               FontSize="13"
+                                               FontWeight="SemiBold" />
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                    <!-- Data Analysis card -->
+                    <Button Classes="analysis-card"
+                            Command="{Binding OpenDataAnalysisCommand}"
+                            Margin="0,0,0,20"
+                            Width="340">
+                        <Border Classes="card"
+                                CornerRadius="14"
+                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                BorderThickness="1"
+                                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                Padding="28,26">
+                            <StackPanel Spacing="0">
+
+                                <!-- Icon circle -->
+                                <Border Width="52" Height="52"
+                                        CornerRadius="26"
+                                        Background="#7C3AED"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,18">
+                                    <TextBlock Text="◎"
+                                               FontSize="22"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                                </Border>
+
+                                <TextBlock Text="Data Analysis"
+                                           FontSize="17"
+                                           FontWeight="SemiBold"
+                                           Margin="0,0,0,8" />
+
+                                <TextBlock Text="Open a workspace to build your analysis. Add match reports, direction maps, and more as dockable panels."
+                                           FontSize="13"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                           Margin="0,0,0,22" />
+
+                                <Border Background="#7C3AED"
+                                        CornerRadius="8"
+                                        Padding="16,9"
+                                        HorizontalAlignment="Left">
+                                    <TextBlock Text="Open"
+                                               Foreground="White"
+                                               FontSize="13"
+                                               FontWeight="SemiBold" />
+                                </Border>
+
+                            </StackPanel>
+                        </Border>
+                    </Button>
+
+                </WrapPanel>
+            </StackPanel>
+        </ScrollViewer>
 
     </Grid>
 </UserControl>

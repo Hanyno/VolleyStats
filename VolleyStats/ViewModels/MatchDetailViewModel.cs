@@ -203,11 +203,33 @@ namespace VolleyStats.ViewModels
             {
                 var rawLines = new List<string>();
                 foreach (var cvm in Codes)
+                {
                     rawLines.Add(BuildSaveLineFromCode(cvm));
+
+                    // CodeLineUp is parsed from two consecutive lines (*P>LUp and *z>LUp).
+                    // BuildSaveLineFromCode only writes the player line; we must also write the
+                    // zone line so the next load can pair them correctly.
+                    if (cvm.Code is CodeLineUp lu && lu.SetterZone.HasValue)
+                    {
+                        var prefix = lu.Team == TeamSide.Home ? "*" : "a";
+                        var zoneCode = $"{prefix}z{lu.SetterZone.Value}>LUp";
+                        rawLines.Add(RebuildLineWithNewCode(zoneCode, lu.RawLine));
+                    }
+                }
 
                 var parser = new DvwFileParser();
                 parser.SaveScoutCodes(_filePath, rawLines);
             });
+        }
+
+        /// <summary>
+        /// Replaces field 0 (the code) in a raw 26-field DVW line, keeping all other fields intact.
+        /// </summary>
+        private static string RebuildLineWithNewCode(string newCode, string rawLine)
+        {
+            var parts = rawLine.Split(';');
+            if (parts.Length > 0) parts[0] = newCode;
+            return string.Join(";", parts);
         }
 
         /// <summary>
@@ -482,6 +504,17 @@ namespace VolleyStats.ViewModels
 
         public void ChangeVideoPath(string path)
         {
+            if (_match != null)
+            {
+                if (_match.VideoPaths == null || _match.VideoPaths.Count == 0)
+                    _match.VideoPaths = new List<string> { path };
+                else
+                    _match.VideoPaths[0] = path;
+
+                var parser = new DvwFileParser();
+                parser.SaveVideoPaths(_filePath, _match.VideoPaths);
+            }
+
             VideoSourcePath = path;
         }
 

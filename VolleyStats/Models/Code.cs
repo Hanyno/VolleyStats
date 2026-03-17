@@ -440,8 +440,10 @@ namespace VolleyStats.Models
                 yield return ParseSingleLine(line);
             }
 
-            if (pendingHome != null) yield return pendingHome.BaseCode;
-            if (pendingAway != null) yield return pendingAway.BaseCode;
+            // Orphaned player codes (no matching zone code) are silently dropped.
+            // This prevents them from appearing at the end of the code list.
+            // The zone code is re-emitted on save (SaveAsync), so the pair is restored
+            // the next time the file is loaded after a save.
         }
 
         private sealed record PendingLineUp(Code BaseCode, TeamSide Team, int[] PlayersOnCourt);

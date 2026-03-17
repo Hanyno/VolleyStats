@@ -11,28 +11,28 @@
 
         <!-- Toolbar -->
         <Border Grid.Row="0"
-                Padding="20,14,20,14"
+                Padding="20,12,20,12"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel>
                 <Button DockPanel.Dock="Left"
                         Content="← Back"
                         Command="{Binding BackCommand}"
-                        Padding="14,8"
-                        Margin="0,0,12,0"
-                        VerticalAlignment="Center" />
+                        Padding="12,7"
+                        Margin="0,0,14,0"
+                        VerticalAlignment="Center"/>
                 <TextBlock Text="Settings"
-                           FontSize="22"
-                           FontWeight="Bold"
-                           VerticalAlignment="Center" />
+                           FontSize="17"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 
         <!-- Content -->
         <ScrollViewer Grid.Row="1">
-            <StackPanel Margin="40,28,40,28"
-                        Spacing="24"
-                        MaxWidth="700"
+            <StackPanel Margin="36,28,36,28"
+                        Spacing="20"
+                        MaxWidth="680"
                         HorizontalAlignment="Left">
 
                 <!-- Keyboard Bindings card -->
@@ -40,24 +40,25 @@
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                         BorderThickness="1"
                         Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                        Padding="24">
-                    <StackPanel Spacing="16">
+                        Padding="22,20">
+                    <StackPanel Spacing="14">
 
                         <!-- Section header -->
                         <DockPanel>
                             <Button DockPanel.Dock="Right"
                                     Content="+ Add Binding"
+                                    Classes="primary"
                                     Click="AddBindingButton_OnClick"
-                                    Padding="12,6" />
+                                    Padding="12,6"/>
                             <TextBlock Text="Keyboard Bindings"
-                                       FontSize="17"
+                                       FontSize="16"
                                        FontWeight="SemiBold"
-                                       VerticalAlignment="Center" />
+                                       VerticalAlignment="Center"/>
                         </DockPanel>
 
-                        <TextBlock Text="Assign a key to automatically insert text when pressed."
+                        <TextBlock Text="Assign a key to automatically insert text into the scout code box."
                                    FontSize="12"
-                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
 
                         <!-- Bindings list -->
                         <ItemsControl ItemsSource="{Binding KeyBindings}"
@@ -66,31 +67,34 @@
                                 <DataTemplate x:DataType="viewmodels:KeyBindingViewModel">
                                     <Border Padding="12,8"
                                             Margin="0,0,0,4"
-                                            CornerRadius="6"
+                                            CornerRadius="8"
                                             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                             BorderThickness="1">
                                         <DockPanel>
                                             <Button DockPanel.Dock="Right"
                                                     Content="✕"
+                                                    Classes="ghost"
                                                     Command="{Binding RemoveCommand}"
-                                                    Padding="8,4"
-                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                    Padding="7,4"
+                                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                                             <StackPanel Orientation="Horizontal"
                                                         Spacing="12"
                                                         VerticalAlignment="Center">
                                                 <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                                        CornerRadius="4"
+                                                        CornerRadius="5"
                                                         Padding="8,3">
                                                     <TextBlock Text="{Binding KeyGesture}"
                                                                FontFamily="Consolas,Courier New,monospace"
-                                                               FontWeight="Bold" />
+                                                               FontWeight="Bold"
+                                                               FontSize="12"/>
                                                 </Border>
                                                 <TextBlock Text="→"
                                                            VerticalAlignment="Center"
-                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <TextBlock Text="{Binding InsertText}"
                                                            FontFamily="Consolas,Courier New,monospace"
-                                                           VerticalAlignment="Center" />
+                                                           FontSize="12"
+                                                           VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </DockPanel>
                                     </Border>
@@ -99,12 +103,12 @@
                         </ItemsControl>
 
                         <!-- Empty state -->
-                        <TextBlock Text="No bindings yet. Click '+ Add Binding' to add one."
+                        <TextBlock Text="No bindings yet. Click '+ Add Binding' to create one."
                                    IsVisible="{Binding !HasBindings}"
                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                                    FontSize="13"
                                    HorizontalAlignment="Center"
-                                   Margin="0,8" />
+                                   Margin="0,8"/>
 
                     </StackPanel>
                 </Border>
@@ -113,5 +117,4 @@
         </ScrollViewer>
 
     </Grid>
-
 </UserControl>

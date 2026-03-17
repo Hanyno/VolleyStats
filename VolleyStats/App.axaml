@@ -3,14 +3,132 @@
              x:Class="VolleyStats.App"
              xmlns:local="using:VolleyStats"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="BrandBrush"       Color="#2563EB"/>
+            <SolidColorBrush x:Key="BrandHoverBrush"  Color="#1D4ED8"/>
+            <SolidColorBrush x:Key="DangerBrush"      Color="#DC2626"/>
+            <SolidColorBrush x:Key="DangerHoverBrush" Color="#B91C1C"/>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <!-- Global rounded corners for interactive controls -->
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <!-- primary — blue accent -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background"      Value="#2563EB"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.primary /template/ ContentPresenter">
+            <Setter Property="Background"   Value="#2563EB"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1D4ED8"/>
+        </Style>
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1E40AF"/>
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Opacity"    Value="0.4"/>
+        </Style>
+
+        <!-- ghost — transparent, subtle hover -->
+        <Style Selector="Button.ghost">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.ghost /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+        </Style>
+        <Style Selector="Button.ghost:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListMediumBrush}"/>
+        </Style>
+
+        <!-- danger — red destructive action -->
+        <Style Selector="Button.danger">
+            <Setter Property="Background"      Value="#DC2626"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.danger /template/ ContentPresenter">
+            <Setter Property="Background"   Value="#DC2626"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.danger:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#B91C1C"/>
+        </Style>
+        <Style Selector="Button.danger:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#991B1B"/>
+        </Style>
+        <Style Selector="Button.danger:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#DC2626"/>
+            <Setter Property="Opacity"    Value="0.4"/>
+        </Style>
+
+        <!-- home-team — blue team action button -->
+        <Style Selector="Button.team-home">
+            <Setter Property="Background"      Value="#2563EB"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.team-home /template/ ContentPresenter">
+            <Setter Property="Background"   Value="#2563EB"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.team-home:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1D4ED8"/>
+        </Style>
+        <Style Selector="Button.team-home:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#1E40AF"/>
+        </Style>
+        <Style Selector="Button.team-home:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Opacity"    Value="0.35"/>
+        </Style>
+
+        <!-- away-team — green team action button -->
+        <Style Selector="Button.team-away">
+            <Setter Property="Background"      Value="#16A34A"/>
+            <Setter Property="Foreground"      Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.team-away /template/ ContentPresenter">
+            <Setter Property="Background"   Value="#16A34A"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.team-away:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#15803D"/>
+        </Style>
+        <Style Selector="Button.team-away:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#166534"/>
+        </Style>
+        <Style Selector="Button.team-away:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#16A34A"/>
+            <Setter Property="Opacity"    Value="0.35"/>
+        </Style>
     </Application.Styles>
 </Application>

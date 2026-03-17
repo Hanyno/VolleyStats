@@ -23,7 +23,10 @@ namespace VolleyStats.Views
         private void OnDataContextChanged(object? sender, System.EventArgs e)
         {
             if (DataContext is HomePageViewModel vm)
+            {
                 vm.TriggerTeamChoiceDialog = ShowTeamChoiceDialogAsync;
+                vm.TriggerNewSeasonDialog = ShowNewSeasonDialogAsync;
+            }
         }
 
         private string FormatTeamDisplay(string name, string? code) =>
@@ -36,6 +39,15 @@ namespace VolleyStats.Views
             return TopLevel.GetTopLevel(this) as Window;
         }
 
+        private async Task<string?> ShowNewSeasonDialogAsync()
+        {
+            var parentWindow = GetParentWindow();
+            if (parentWindow == null) return null;
+
+            var dialog = new NewSeasonWindow();
+            return await dialog.ShowDialog<string?>(parentWindow);
+        }
+
         private async Task<string?> ShowTeamChoiceDialogAsync(string display1, string value1, string display2, string value2)
         {
             var parentWindow = GetParentWindow();
@@ -46,8 +58,8 @@ namespace VolleyStats.Views
             var dialog = new Window
             {
                 Title = "Choose Team to Analyze",
-                Width = 420,
-                Height = 170,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                MinWidth = 300,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 CanResize = false,
                 Content = new StackPanel

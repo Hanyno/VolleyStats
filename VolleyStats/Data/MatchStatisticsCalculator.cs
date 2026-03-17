@@ -13,6 +13,11 @@ namespace VolleyStats.Data
         public bool IsLibero { get; set; }
         public List<int> SetsPlayed { get; set; } = new();
 
+        /// <summary>Starting court zone (1–6) per set, keyed by set number.
+        /// Populated only for sets where the player was in the starting lineup.
+        /// Players who entered as substitutes will have no entry for that set.</summary>
+        public Dictionary<int, int> SetZones { get; set; } = new();
+
         // Serve
         public int ServeTot { get; set; }
         public int ServeErr { get; set; }
@@ -32,6 +37,11 @@ namespace VolleyStats.Data
 
         // Block
         public int BlkPts { get; set; }
+        public int BlkPoor { get; set; }  // B/ — block touch, not stopped
+
+        // Set / Freeball errors
+        public int SetErr { get; set; }      // E=
+        public int FreeBallErr { get; set; } // F=
 
         // Points summary
         public int TotalPoints => ServePts + AtkPts + BlkPts;
@@ -73,6 +83,9 @@ namespace VolleyStats.Data
         public int AtkPts { get; set; }
 
         public int BlkPts { get; set; }
+        public int BlkPoor { get; set; }     // B/
+        public int SetErr { get; set; }      // E=
+        public int FreeBallErr { get; set; } // F=
         public int OpponentErrors { get; set; }
 
         public string RecPosPercent => RecTot > 0 ? $"{RecPos * 100 / RecTot}%" : ".";
@@ -122,11 +135,12 @@ namespace VolleyStats.Data
         {
             var data = new MatchReportData { Match = match };
 
-            var ballCodes = match.ScoutCodes.OfType<BallContactCode>().ToList();
+            var ballCodes  = match.ScoutCodes.OfType<BallContactCode>().ToList();
             var scoreCodes = match.ScoutCodes.OfType<CodeScoreMarker>().ToList();
+            var lineUps    = match.ScoutCodes.OfType<CodeLineUp>().ToList();
 
-            data.HomeStats = CalculateTeamStats(match, ballCodes, scoreCodes, TeamSide.Home);
-            data.AwayStats = CalculateTeamStats(match, ballCodes, scoreCodes, TeamSide.Away);
+            data.HomeStats = CalculateTeamStats(match, ballCodes, scoreCodes, lineUps, TeamSide.Home);
+            data.AwayStats = CalculateTeamStats(match, ballCodes, scoreCodes, lineUps, TeamSide.Away);
 
             return data;
         }
@@ -135,6 +149,7 @@ namespace VolleyStats.Data
             Match match,
             List<BallContactCode> allBallCodes,
             List<CodeScoreMarker> allScoreCodes,
+            List<CodeLineUp> lineUps,
             TeamSide side)
         {
             bool isHome = side == TeamSide.Home;
@@ -162,12 +177,21 @@ namespace VolleyStats.Data
                     IsLibero = player.Position == PlayerPost.Libero,
                 };
 
-                // Determine which sets this player played
+                // Determine which sets this player played and their starting zone
                 for (int s = 1; s <= setCount; s++)
                 {
                     var setPlayerCodes = teamCodes.Where(c => c.SetNumber == s && c.PlayerNumber == player.JerseyNumber);
                     if (setPlayerCodes.Any())
                         ps.SetsPlayed.Add(s);
+
+                    // Starting zone from lineup code for this set
+                    var lineup = lineUps.FirstOrDefault(c => c.Team == side && c.SetNumber == s);
+                    if (lineup != null)
+                    {
+                        var zoneIdx = Array.IndexOf(lineup.PlayersOnCourt, player.JerseyNumber);
+                        if (zoneIdx >= 0)
+                            ps.SetZones[s] = zoneIdx + 1;  // 1-based zone
+                    }
                 }
 
                 var playerCodes = teamCodes.Where(c => c.PlayerNumber == player.JerseyNumber).ToList();
@@ -194,7 +218,14 @@ namespace VolleyStats.Data
 
                 // Block
                 var blocks = playerCodes.Where(c => c.Skill == Skill.Block).ToList();
-                ps.BlkPts = blocks.Count(c => c.Evaluation == Evaluation.Point);
+                ps.BlkPts  = blocks.Count(c => c.Evaluation == Evaluation.Point);
+                ps.BlkPoor = blocks.Count(c => c.Evaluation == Evaluation.VeryPoorOrBlocked);
+
+                // Set errors
+                ps.SetErr = playerCodes.Count(c => c.Skill == Skill.Set && c.Evaluation == Evaluation.Error);
+
+                // FreeBall errors
+                ps.FreeBallErr = playerCodes.Count(c => c.Skill == Skill.FreeBall && c.Evaluation == Evaluation.Error);
 
                 stats.Players.Add(ps);
             }
@@ -248,7 +279,10 @@ namespace VolleyStats.Data
             stats.AtkBlo = stats.Players.Sum(p => p.AtkBlo);
             stats.AtkPts = stats.Players.Sum(p => p.AtkPts);
 
-            stats.BlkPts = stats.Players.Sum(p => p.BlkPts);
+            stats.BlkPts  = stats.Players.Sum(p => p.BlkPts);
+            stats.BlkPoor = stats.Players.Sum(p => p.BlkPoor);
+            stats.SetErr      = stats.Players.Sum(p => p.SetErr);
+            stats.FreeBallErr = stats.Players.Sum(p => p.FreeBallErr);
 
             stats.TotalPoints = stats.ServePts + stats.AtkPts + stats.BlkPts;
             stats.OpponentErrors = opponentCodes.Count(c => c.Evaluation == Evaluation.Error);
@@ -336,7 +370,12 @@ namespace VolleyStats.Data
 
                     // Block
                     var blocks = playerCodes.Where(c => c.Skill == Skill.Block).ToList();
-                    ps.BlkPts += blocks.Count(c => c.Evaluation == Evaluation.Point);
+                    ps.BlkPts  += blocks.Count(c => c.Evaluation == Evaluation.Point);
+                    ps.BlkPoor += blocks.Count(c => c.Evaluation == Evaluation.VeryPoorOrBlocked);
+
+                    // Set / FreeBall errors
+                    ps.SetErr      += playerCodes.Count(c => c.Skill == Skill.Set      && c.Evaluation == Evaluation.Error);
+                    ps.FreeBallErr += playerCodes.Count(c => c.Skill == Skill.FreeBall && c.Evaluation == Evaluation.Error);
                 }
             }
 
@@ -359,7 +398,10 @@ namespace VolleyStats.Data
             teamStats.AtkErr = teamStats.Players.Sum(p => p.AtkErr);
             teamStats.AtkBlo = teamStats.Players.Sum(p => p.AtkBlo);
             teamStats.AtkPts = teamStats.Players.Sum(p => p.AtkPts);
-            teamStats.BlkPts = teamStats.Players.Sum(p => p.BlkPts);
+            teamStats.BlkPts  = teamStats.Players.Sum(p => p.BlkPts);
+            teamStats.BlkPoor = teamStats.Players.Sum(p => p.BlkPoor);
+            teamStats.SetErr      = teamStats.Players.Sum(p => p.SetErr);
+            teamStats.FreeBallErr = teamStats.Players.Sum(p => p.FreeBallErr);
             teamStats.TotalPoints = teamStats.ServePts + teamStats.AtkPts + teamStats.BlkPts;
 
             // Use the first match as the "representative" for match info

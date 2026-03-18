@@ -257,76 +257,65 @@ namespace VolleyStats.Data
 
         // ── Team section: header bar + player table + summary strip + staff ─────
         //
-        // baseWidth: sum of all fixed columns in ComposePlayerTable (no set cols).
-        // The entire block is centred on the page by sandwiching it between two
-        // RelativeItem spacers.
-        private const float TeamSectionBaseWidth = 337f;  // fixed cols: 97+45+70+79+15+13+18
-        private const float SetColWidth = 13f;
-
         private static void ComposeTeamSection(IContainer container, TeamStats stats, bool isHome, int setCount,
             TeamStats? oppStats = null)
         {
             var headerBg = isHome ? BrandBlue : AwayGreen;
-            float blockWidth = TeamSectionBaseWidth + setCount * SetColWidth;
 
-            container.Row(outerRow =>
+            container.Column(col =>
             {
-                outerRow.RelativeItem();  // left spacer — centres the block
-                outerRow.ConstantItem(blockWidth).Column(col =>
+                // Team name bar
+                col.Item().Background(headerBg).PaddingHorizontal(7).PaddingVertical(3)
+                    .Text(stats.TeamName.ToUpperInvariant())
+                    .FontSize(7.5f).Bold().FontColor(White);
+
+                // Player statistics table
+                col.Item().Element(c => ComposePlayerTable(c, stats, setCount));
+
+                // Points-by-category summary strip
+                int oppErrors = oppStats != null
+                    ? oppStats.AtkErr + oppStats.BlkPoor + oppStats.ServeErr + oppStats.SetErr + oppStats.FreeBallErr
+                    : stats.OpponentErrors;
+                int grandTotal = stats.TotalPoints + oppErrors;
+                col.Item().Background("#EEF2FB")
+                    .PaddingHorizontal(7).PaddingVertical(2).Text(t =>
                 {
-                    // Team name bar
-                    col.Item().Background(headerBg).PaddingHorizontal(7).PaddingVertical(3)
-                        .Text(stats.TeamName.ToUpperInvariant())
-                        .FontSize(7.5f).Bold().FontColor(White);
-
-                    // Player statistics table
-                    col.Item().Element(c => ComposePlayerTable(c, stats, setCount));
-
-                    // Points-by-category summary strip
-                    int oppErrors = oppStats != null
-                        ? oppStats.AtkErr + oppStats.BlkPoor + oppStats.ServeErr + oppStats.SetErr + oppStats.FreeBallErr
-                        : stats.OpponentErrors;
-                    int grandTotal = stats.TotalPoints + oppErrors;
-                    col.Item().Background("#EEF2FB")
-                        .PaddingHorizontal(7).PaddingVertical(2).Text(t =>
-                    {
-                        t.Span("Points won: ").FontSize(5.5f).SemiBold().FontColor(MedGray);
-                        t.Span($"Serve {stats.ServePts}").FontSize(5.5f).Bold().FontColor(ServeBlue);
-                        t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
-                        t.Span($"Attack {stats.AtkPts}").FontSize(5.5f).Bold().FontColor(AtkPurple);
-                        t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
-                        t.Span($"Block {stats.BlkPts}").FontSize(5.5f).Bold().FontColor(BlkAmber);
-                        t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
-                        t.Span($"Opp. errors {oppErrors}").FontSize(5.5f).FontColor(MedGray);
-                        t.Span($"   Total: {grandTotal}").FontSize(6f).Bold().FontColor(DarkBlue);
-                    });
-
-                    // Coaching staff
-                    if (!string.IsNullOrWhiteSpace(stats.CoachName) ||
-                        !string.IsNullOrWhiteSpace(stats.AssistantCoach))
-                    {
-                        col.Item().PaddingTop(2).PaddingHorizontal(3).Text(t =>
-                        {
-                            if (!string.IsNullOrEmpty(stats.CoachName))
-                            {
-                                t.Span("Coach: ").SemiBold().FontSize(6f);
-                                t.Span(stats.CoachName).FontSize(6f);
-                            }
-                            if (!string.IsNullOrEmpty(stats.AssistantCoach))
-                            {
-                                t.Span("   Asst: ").SemiBold().FontSize(6f);
-                                t.Span(stats.AssistantCoach).FontSize(6f);
-                            }
-                        });
-                    }
+                    t.Span("Points won: ").FontSize(5.5f).SemiBold().FontColor(MedGray);
+                    t.Span($"Serve {stats.ServePts}").FontSize(5.5f).Bold().FontColor(ServeBlue);
+                    t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
+                    t.Span($"Attack {stats.AtkPts}").FontSize(5.5f).Bold().FontColor(AtkPurple);
+                    t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
+                    t.Span($"Block {stats.BlkPts}").FontSize(5.5f).Bold().FontColor(BlkAmber);
+                    t.Span("   ·   ").FontSize(5.5f).FontColor(MedGray);
+                    t.Span($"Opp. errors {oppErrors}").FontSize(5.5f).FontColor(MedGray);
+                    t.Span($"   Total: {grandTotal}").FontSize(6f).Bold().FontColor(DarkBlue);
                 });
-                outerRow.RelativeItem();  // right spacer — centres the block
+
+                // Coaching staff
+                if (!string.IsNullOrWhiteSpace(stats.CoachName) ||
+                    !string.IsNullOrWhiteSpace(stats.AssistantCoach))
+                {
+                    col.Item().PaddingTop(2).PaddingHorizontal(3).Text(t =>
+                    {
+                        if (!string.IsNullOrEmpty(stats.CoachName))
+                        {
+                            t.Span("Coach: ").SemiBold().FontSize(6f);
+                            t.Span(stats.CoachName).FontSize(6f);
+                        }
+                        if (!string.IsNullOrEmpty(stats.AssistantCoach))
+                        {
+                            t.Span("   Asst: ").SemiBold().FontSize(6f);
+                            t.Span(stats.AssistantCoach).FontSize(6f);
+                        }
+                    });
+                }
             });
         }
 
         // ── Player statistics table ───────────────────────────────────────────
         //
-        // Column layout — all ConstantColumn; table is centred via ComposeTeamSection.
+        // Column layout — all RelativeColumn so the table stretches to full page width.
+        // Proportions mirror the original fixed-pixel ratios.
         //   Identity: # (14) · L (8) · Name (75)                          = 97
         //   Set positions: setCount × 13
         //   Serve:     Tot/Err/Pts    3 × 15                               = 45
@@ -335,7 +324,6 @@ namespace VolleyStats.Data
         //   Block:     Pts 15                                              = 15
         //   Total pts: 13                                                  = 13
         //   W-L:       18  (won−lost, can be negative)                    = 18
-        //                                                        base total = 337
         private static void ComposePlayerTable(IContainer container, TeamStats stats, int setCount)
         {
             // Colour for set-position column group header
@@ -345,25 +333,25 @@ namespace VolleyStats.Data
             {
                 table.ColumnsDefinition(cols =>
                 {
-                    cols.ConstantColumn(14);   // #
-                    cols.ConstantColumn(8);    // L (libero marker)
-                    cols.ConstantColumn(75);   // Name
+                    cols.RelativeColumn(14);   // #
+                    cols.RelativeColumn(8);    // L (libero marker)
+                    cols.RelativeColumn(75);   // Name
                     for (int s = 0; s < setCount; s++)
-                        cols.ConstantColumn(13);   // per-set position column
+                        cols.RelativeColumn(13);   // per-set position column
                     // Serve
-                    cols.ConstantColumn(15); cols.ConstantColumn(15); cols.ConstantColumn(15);
+                    cols.RelativeColumn(15); cols.RelativeColumn(15); cols.RelativeColumn(15);
                     // Reception
-                    cols.ConstantColumn(15); cols.ConstantColumn(15);
-                    cols.ConstantColumn(20); cols.ConstantColumn(20);
+                    cols.RelativeColumn(15); cols.RelativeColumn(15);
+                    cols.RelativeColumn(20); cols.RelativeColumn(20);
                     // Attack
-                    cols.ConstantColumn(15); cols.ConstantColumn(15);
-                    cols.ConstantColumn(15); cols.ConstantColumn(15); cols.ConstantColumn(19);
+                    cols.RelativeColumn(15); cols.RelativeColumn(15);
+                    cols.RelativeColumn(15); cols.RelativeColumn(15); cols.RelativeColumn(19);
                     // Block
-                    cols.ConstantColumn(15);
+                    cols.RelativeColumn(15);
                     // Total points
-                    cols.ConstantColumn(13);
+                    cols.RelativeColumn(13);
                     // W-L (won minus lost, can be negative)
-                    cols.ConstantColumn(18);
+                    cols.RelativeColumn(18);
                 });
 
                 // ── Header rows ──────────────────────────────────────────────
@@ -500,16 +488,16 @@ namespace VolleyStats.Data
                 {
                     table.ColumnsDefinition(cols =>
                     {
-                        cols.ConstantColumn(20); // Set label
+                        cols.RelativeColumn(20); // Set label
                         // Serve: Tot / Err / Pts
-                        cols.ConstantColumn(15); cols.ConstantColumn(15); cols.ConstantColumn(15);
+                        cols.RelativeColumn(15); cols.RelativeColumn(15); cols.RelativeColumn(15);
                         // Reception: Tot / Err / Pos%
-                        cols.ConstantColumn(15); cols.ConstantColumn(15); cols.ConstantColumn(22);
+                        cols.RelativeColumn(15); cols.RelativeColumn(15); cols.RelativeColumn(22);
                         // Attack: Tot / Err / Blk / Pts
-                        cols.ConstantColumn(15); cols.ConstantColumn(15);
-                        cols.ConstantColumn(15); cols.ConstantColumn(15);
+                        cols.RelativeColumn(15); cols.RelativeColumn(15);
+                        cols.RelativeColumn(15); cols.RelativeColumn(15);
                         // Block
-                        cols.ConstantColumn(15);
+                        cols.RelativeColumn(15);
                     });
 
                     table.Header(header =>

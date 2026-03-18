@@ -36,6 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="FFMpegCore" Version="5.1.0" />
     <PackageReference Include="QuestPDF" Version="2025.4.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.2" />
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23" />

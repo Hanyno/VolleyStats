@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using VolleyStats.ViewModels;
 
@@ -19,6 +20,61 @@ namespace VolleyStats.Views
                 vm.PropertyChanged += OnViewModelPropertyChanged;
                 vm.InitializationCompleted += OnInitializationCompleted;
                 vm.PauseVideoRequested += OnPauseVideoRequested;
+
+                vm.RequestSavePath = async options =>
+                {
+                    var topLevel = TopLevel.GetTopLevel(this);
+                    if (topLevel == null) return null;
+
+                    var file = await topLevel.StorageProvider.SaveFilePickerAsync(options);
+                    return file?.Path.LocalPath;
+                };
+
+                vm.RequestShowMessage = async (title, message) =>
+                {
+                    var window = TopLevel.GetTopLevel(this) as Window;
+                    if (window == null) return;
+
+                    var dialog = new Window
+                    {
+                        Title = title,
+                        Width = 420,
+                        Height = 180,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        CanResize = false,
+                        Content = new StackPanel
+                        {
+                            Margin = new Avalonia.Thickness(24, 20),
+                            Spacing = 16,
+                            Children =
+                            {
+                                new TextBlock
+                                {
+                                    Text = message,
+                                    FontSize = 14,
+                                    TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                                },
+                                new Button
+                                {
+                                    Content = "OK",
+                                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+                                    Padding = new Avalonia.Thickness(24, 8)
+                                }
+                            }
+                        }
+                    };
+
+                    // Wire OK button to close
+                    if (dialog.Content is StackPanel sp && sp.Children[1] is Button okBtn)
+                        okBtn.Click += (_, _) => dialog.Close();
+
+                    await dialog.ShowDialog(window);
+                };
+
+                VideoPlayer.PlaybackStateChanged += (_, isPlaying) =>
+                {
+                    vm.IsVideoPlaying = isPlaying;
+                };
 
                 if (vm.VideoSourcePath != null)
                     VideoPlayer.VideoPath = vm.VideoSourcePath;

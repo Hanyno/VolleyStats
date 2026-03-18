@@ -73,7 +73,8 @@ namespace VolleyStats.ViewModels
                             tab.Content = homeVm;
                             await homeVm.InitializeAsync();
                         },
-                        _shortcutsStore);
+                        _shortcutsStore,
+                        new Data.AppSettingsStore());
                     tab.Header = "Settings";
                     tab.Content = settingsVm;
                 });

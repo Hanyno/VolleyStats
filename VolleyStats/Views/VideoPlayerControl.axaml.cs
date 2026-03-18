@@ -53,6 +53,8 @@ namespace VolleyStats.Views
         private bool _isPaintMode;
         private Polyline? _currentStroke;
 
+        public event EventHandler<bool>? PlaybackStateChanged;
+
         public static readonly StyledProperty<string?> VideoPathProperty =
             AvaloniaProperty.Register<VideoPlayerControl, string?>(nameof(VideoPath));
 
@@ -166,6 +168,7 @@ namespace VolleyStats.Views
                     if (_detached) return;
                     HideStatus();
                     PlayPauseBtn.Content = "\u23f8";
+                    PlaybackStateChanged?.Invoke(this, true);
                 });
                 if (_pendingSeek.HasValue)
                 {
@@ -209,9 +212,19 @@ namespace VolleyStats.Views
                 }
             };
             player.Paused += (_, _) =>
-                Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_detached) return;
+                    PlayPauseBtn.Content = "\u25b6";
+                    PlaybackStateChanged?.Invoke(this, false);
+                });
             player.Stopped += (_, _) =>
-                Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (_detached) return;
+                    PlayPauseBtn.Content = "\u25b6";
+                    PlaybackStateChanged?.Invoke(this, false);
+                });
             player.EncounteredError += (_, _) =>
                 ShowStatus("Video playback error");
 
@@ -268,6 +281,7 @@ namespace VolleyStats.Views
                         if (_detached) return;
                         HideStatus();
                         PlayPauseBtn.Content = "\u23f8";
+                        PlaybackStateChanged?.Invoke(this, true);
                     });
                 }
 
@@ -314,7 +328,12 @@ namespace VolleyStats.Views
             player.Paused += (_, _) =>
             {
                 if (_activePooled == pooled)
-                    Dispatcher.UIThread.Post(() => { if (!_detached) PlayPauseBtn.Content = "\u25b6"; });
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (_detached) return;
+                        PlayPauseBtn.Content = "\u25b6";
+                        PlaybackStateChanged?.Invoke(this, false);
+                    });
             };
 
             pooled.Player = player;

@@ -113,6 +113,57 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Video Rendering card -->
+                <Border CornerRadius="12"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1"
+                        Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        Padding="22,20">
+                    <StackPanel Spacing="14">
+
+                        <TextBlock Text="Video Rendering"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"/>
+
+                        <TextBlock Text="Configure FFmpeg encoder for rendering compilation videos from selected actions."
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+
+                        <!-- Encoder mode -->
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="Encoder:"
+                                       VerticalAlignment="Center"
+                                       FontSize="13"/>
+                            <ComboBox ItemsSource="{Binding EncoderModeOptions}"
+                                      SelectedItem="{Binding VideoEncoderMode}"
+                                      MinWidth="180"/>
+                        </StackPanel>
+
+                        <!-- FFmpeg path -->
+                        <StackPanel Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="FFmpeg:"
+                                           VerticalAlignment="Center"
+                                           FontSize="13"/>
+                                <TextBlock Text="{Binding FfmpegStatus}"
+                                           VerticalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBox Text="{Binding FfmpegPath}"
+                                         Watermark="Leave empty to use PATH"
+                                         MinWidth="320"
+                                         FontSize="12"/>
+                                <Button Content="Browse..."
+                                        Click="BrowseFfmpegButton_OnClick"
+                                        Padding="12,6"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                    </StackPanel>
+                </Border>
+
             </StackPanel>
         </ScrollViewer>
 

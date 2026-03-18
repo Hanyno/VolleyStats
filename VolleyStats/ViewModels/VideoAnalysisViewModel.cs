@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using VolleyStats.Data;
@@ -36,6 +37,8 @@ namespace VolleyStats.ViewModels
         private readonly Func<Task> _navigateBack;
         private readonly List<VideoAnalysisCodeItem> _allCodes = new();
         private CancellationTokenSource? _autoAdvanceCts;
+        private CancellationTokenSource? _renderCts;
+        private readonly AppSettingsStore _settingsStore = new();
 
         public event EventHandler? InitializationCompleted;
         public event EventHandler? PauseVideoRequested;
@@ -118,11 +121,61 @@ namespace VolleyStats.ViewModels
             }
         }
 
+        // Video playback state — set by the View when player fires Playing/Paused
+        private volatile bool _isVideoPlaying;
+        public bool IsVideoPlaying
+        {
+            get => _isVideoPlaying;
+            set => _isVideoPlaying = value;
+        }
+
+        // Render state
+        private bool _isRendering;
+        public bool IsRendering
+        {
+            get => _isRendering;
+            set => SetProperty(ref _isRendering, value);
+        }
+
+        private double _renderProgress;
+        public double RenderProgress
+        {
+            get => _renderProgress;
+            set => SetProperty(ref _renderProgress, value);
+        }
+
+        private string _renderStatusText = "";
+        public string RenderStatusText
+        {
+            get => _renderStatusText;
+            set
+            {
+                if (SetProperty(ref _renderStatusText, value))
+                    OnPropertyChanged(nameof(HasRenderStatus));
+            }
+        }
+
+        public bool HasRenderStatus => !string.IsNullOrEmpty(_renderStatusText);
+
+        // Queue
+        public RenderQueueService RenderQueue => RenderQueueService.Instance;
+
+        // Event for the View to handle the save dialog
+        public Func<FilePickerSaveOptions, Task<string?>>? RequestSavePath { get; set; }
+
+        // Event for the View to show a message dialog
+        public Func<string, string, Task>? RequestShowMessage { get; set; }
+
         public IRelayCommand BackCommand { get; }
         public IRelayCommand IncrementBeforeCommand { get; }
         public IRelayCommand DecrementBeforeCommand { get; }
         public IRelayCommand IncrementAfterCommand { get; }
         public IRelayCommand DecrementAfterCommand { get; }
+        public IAsyncRelayCommand RenderVideoCommand { get; }
+        public IRelayCommand CancelRenderCommand { get; }
+        public IAsyncRelayCommand AddToQueueCommand { get; }
+        public IAsyncRelayCommand StartQueueCommand { get; }
+        public IRelayCommand CancelQueueCommand { get; }
 
         private readonly IReadOnlyList<string> _matchFilePaths;
 
@@ -137,6 +190,181 @@ namespace VolleyStats.ViewModels
             DecrementBeforeCommand = new RelayCommand(() => SecondsBefore--);
             IncrementAfterCommand = new RelayCommand(() => SecondsAfter++);
             DecrementAfterCommand = new RelayCommand(() => SecondsAfter--);
+            RenderVideoCommand = new AsyncRelayCommand(RenderVideoAsync, CanRenderVideo);
+            CancelRenderCommand = new RelayCommand(CancelRender);
+            AddToQueueCommand = new AsyncRelayCommand(AddToQueueAsync, () => FilteredCodes.Count > 0);
+            StartQueueCommand = new AsyncRelayCommand(StartQueueAsync, () => RenderQueue.HasJobs && !RenderQueue.IsProcessing);
+            CancelQueueCommand = new RelayCommand(() => RenderQueue.CancelProcessing());
+
+            RenderQueue.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName is nameof(RenderQueueService.HasJobs) or nameof(RenderQueueService.IsProcessing))
+                    StartQueueCommand.NotifyCanExecuteChanged();
+            };
+        }
+
+        private bool CanRenderVideo() => FilteredCodes.Count > 0 && !IsRendering;
+
+        private void CancelRender()
+        {
+            _renderCts?.Cancel();
+        }
+
+        private List<VideoSegment> BuildSegments()
+        {
+            return FilteredCodes
+                .Where(c => c.VideoPath != null && c.VideoSecond.HasValue)
+                .Select(c => new VideoSegment
+                {
+                    FilePath = c.VideoPath!,
+                    StartSeconds = Math.Max(0, c.VideoSecond!.Value - SecondsBefore),
+                    EndSeconds = c.VideoSecond!.Value + SecondsAfter
+                })
+                .ToList();
+        }
+
+        private string BuildFilterDescription()
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(_teamFilter)) parts.Add($"T={_teamFilter}");
+            if (!string.IsNullOrEmpty(_playerFilter)) parts.Add($"P={_playerFilter}");
+            if (!string.IsNullOrEmpty(_skillFilter)) parts.Add($"S={_skillFilter}");
+            if (!string.IsNullOrEmpty(_hitFilter)) parts.Add($"H={_hitFilter}");
+            if (!string.IsNullOrEmpty(_evalFilter)) parts.Add($"E={_evalFilter}");
+            var filter = parts.Count > 0 ? string.Join(" ", parts) : "all";
+            return $"{AnalysisTeam} [{filter}] ({FilteredCodes.Count} codes)";
+        }
+
+        private async Task AddToQueueAsync()
+        {
+            var segments = BuildSegments();
+            if (segments.Count == 0) return;
+
+            if (RequestSavePath == null) return;
+
+            var saveOptions = new FilePickerSaveOptions
+            {
+                Title = "Save Rendered Video",
+                SuggestedFileName = $"VideoAnalysis_{AnalysisTeam}.mp4",
+                DefaultExtension = "mp4",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("MP4 Video") { Patterns = new[] { "*.mp4" } }
+                }
+            };
+
+            var outputPath = await RequestSavePath(saveOptions);
+            if (string.IsNullOrEmpty(outputPath)) return;
+
+            var job = new RenderJob
+            {
+                Name = BuildFilterDescription(),
+                OutputPath = outputPath,
+                Segments = segments
+            };
+
+            RenderQueue.AddJob(job);
+            RenderStatusText = $"Added to queue ({RenderQueue.Jobs.Count} jobs)";
+        }
+
+        private async Task StartQueueAsync()
+        {
+            var encoderMode = _settingsStore.LoadVideoEncoderMode();
+            var ffmpegPath = _settingsStore.LoadFfmpegPath();
+
+            Console.Error.WriteLine($"[RenderVM] Starting queue: {RenderQueue.Jobs.Count} jobs, encoder={encoderMode}");
+
+            await RenderQueue.ProcessQueueAsync(encoderMode, ffmpegPath, () =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    RenderStatusText = RenderQueue.QueueStatusText;
+                    RequestShowMessage?.Invoke("Render Queue Complete", RenderQueue.QueueStatusText);
+                });
+            });
+        }
+
+        private async Task RenderVideoAsync()
+        {
+            Console.Error.WriteLine($"[RenderVM] RenderVideoAsync called, FilteredCodes.Count={FilteredCodes.Count}");
+
+            var segments = BuildSegments();
+
+            Console.Error.WriteLine($"[RenderVM] Built {segments.Count} segments (SecondsBefore={SecondsBefore}, SecondsAfter={SecondsAfter})");
+            foreach (var seg in segments)
+                Console.Error.WriteLine($"[RenderVM]   Segment: {seg.FilePath} [{seg.StartSeconds}s - {seg.EndSeconds}s]");
+
+            if (segments.Count == 0)
+            {
+                Console.Error.WriteLine($"[RenderVM] No segments, aborting");
+                return;
+            }
+
+            if (RequestSavePath == null)
+            {
+                Console.Error.WriteLine($"[RenderVM] RequestSavePath is null, aborting");
+                return;
+            }
+
+            var saveOptions = new FilePickerSaveOptions
+            {
+                Title = "Save Rendered Video",
+                SuggestedFileName = $"VideoAnalysis_{AnalysisTeam}.mp4",
+                DefaultExtension = "mp4",
+                FileTypeChoices = new[]
+                {
+                    new FilePickerFileType("MP4 Video") { Patterns = new[] { "*.mp4" } }
+                }
+            };
+
+            var outputPath = await RequestSavePath(saveOptions);
+            Console.Error.WriteLine($"[RenderVM] Save path: {outputPath ?? "(cancelled)"}");
+            if (string.IsNullOrEmpty(outputPath)) return;
+
+            var encoderMode = _settingsStore.LoadVideoEncoderMode();
+            var ffmpegPath = _settingsStore.LoadFfmpegPath();
+            Console.Error.WriteLine($"[RenderVM] EncoderMode={encoderMode}, FfmpegPath={ffmpegPath ?? "(null)"}");
+
+            IsRendering = true;
+            RenderProgress = 0;
+            RenderStatusText = "Starting...";
+            RenderVideoCommand.NotifyCanExecuteChanged();
+            _renderCts = new CancellationTokenSource();
+
+            var progress = new Progress<VideoRenderProgress>(p =>
+            {
+                RenderProgress = p.OverallPercent;
+                RenderStatusText = $"{p.Phase}: {p.CurrentSegment}/{p.TotalSegments}";
+                Console.Error.WriteLine($"[RenderVM] Progress: {p.OverallPercent:F1}% - {p.Phase}: {p.CurrentSegment}/{p.TotalSegments}");
+            });
+
+            try
+            {
+                var renderer = new VideoRendererService();
+                await renderer.RenderAsync(segments, outputPath, encoderMode, ffmpegPath, progress, _renderCts.Token);
+                RenderStatusText = "Render complete!";
+                Console.Error.WriteLine($"[RenderVM] Render complete!");
+            }
+            catch (OperationCanceledException)
+            {
+                RenderStatusText = "Render cancelled.";
+                Console.Error.WriteLine($"[RenderVM] Render cancelled by user");
+                try { if (File.Exists(outputPath)) File.Delete(outputPath); } catch { }
+            }
+            catch (Exception ex)
+            {
+                RenderStatusText = $"Error: {ex.Message}";
+                Console.Error.WriteLine($"[RenderVM] Render FAILED: {ex.GetType().Name}: {ex.Message}");
+                Console.Error.WriteLine($"[RenderVM] Stack: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                    Console.Error.WriteLine($"[RenderVM] Inner: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}");
+            }
+            finally
+            {
+                IsRendering = false;
+                _renderCts = null;
+                RenderVideoCommand.NotifyCanExecuteChanged();
+            }
         }
 
         public async Task InitializeAsync()
@@ -214,6 +442,9 @@ namespace VolleyStats.ViewModels
                 if (!MatchesFilter(item)) continue;
                 FilteredCodes.Add(item);
             }
+
+            RenderVideoCommand.NotifyCanExecuteChanged();
+            AddToQueueCommand.NotifyCanExecuteChanged();
         }
 
         private bool MatchesFilter(VideoAnalysisCodeItem item)
@@ -279,17 +510,27 @@ namespace VolleyStats.ViewModels
         {
             var cts = new CancellationTokenSource();
             _autoAdvanceCts = cts;
-            var delayMs = (_secondsBefore + _secondsAfter) * 1000;
+            var totalMs = (_secondsBefore + _secondsAfter) * 1000;
 
             Task.Run(async () =>
             {
                 try
                 {
-                    await Task.Delay(delayMs, cts.Token);
-                    if (cts.Token.IsCancellationRequested) return;
+                    var elapsed = 0;
+                    const int tickMs = 100;
+                    while (elapsed < totalMs)
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        await Task.Delay(tickMs, cts.Token);
+
+                        // Only count down while the video is actually playing
+                        if (_isVideoPlaying)
+                            elapsed += tickMs;
+                    }
+
                     AdvanceToNextCode();
                 }
-                catch (TaskCanceledException) { }
+                catch (OperationCanceledException) { }
             }, cts.Token);
         }
 
